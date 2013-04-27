@@ -9,8 +9,9 @@ import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
-import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.adt.io.in.IInputStreamOpener;
+
+import com.example.bigbangbowl.BBBActivity;
 
 public class SplashScene extends Scene {
 	
@@ -23,7 +24,7 @@ public class SplashScene extends Scene {
 	private Sprite mSplash;
 	
 	/** creates a splash scene and loads required stuff */
-	public SplashScene(final BaseGameActivity activity) {
+	public SplashScene(final BBBActivity activity) {
 		super();
 		
 		try {
@@ -46,8 +47,9 @@ public class SplashScene extends Scene {
 //				pGLState.enableDither();
 //			}
 //		};
-		
-		mSplash.setScale(1);
+		float currentWidth = activity.getCurrentWidth();
+		float scaleY = currentWidth / BBBActivity.CAMERA_WIDTH;
+		mSplash.setScale(1, scaleY);
 		mSplash.setPosition(0, 0);
 		attachChild(mSplash);
 	}

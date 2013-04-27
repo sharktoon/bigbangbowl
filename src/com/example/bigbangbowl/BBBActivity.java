@@ -6,19 +6,18 @@ import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.background.Background;
 import org.andengine.ui.activity.BaseGameActivity;
-import org.andengine.engine.options.resolutionpolicy.FixedHeightResolutionPolicy;
 
+import com.example.bigbangbowl.game.GameScene;
 import com.example.bigbangbowl.scenes.SplashScene;
 
 public class BBBActivity extends BaseGameActivity {
 	private Camera mCamera;
-	private static final int CAMERA_WIDTH = 800;
-	private static final int CAMERA_HEIGHT = 480;
+	public static final int CAMERA_WIDTH = 800;
+	public static final int CAMERA_HEIGHT = 480;
 	
 	/** the resolution policy - keeps track of the current width */
-	FixedHeightResolutionPolicy mResolutionPolicy;
+	private FixedHeightResolutionPolicy mResolutionPolicy;
 	
 	/** currently displayed scene */
 	private Scene mCurrentScene;
@@ -26,7 +25,7 @@ public class BBBActivity extends BaseGameActivity {
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
-		FixedHeightResolutionPolicy respol = new FixedHeightResolutionPolicy(CAMERA_HEIGHT);
+		FixedHeightResolutionPolicy respol = new FixedHeightResolutionPolicy(CAMERA_HEIGHT, mCamera);
 		mResolutionPolicy = respol;
 		EngineOptions options = new EngineOptions(true, ScreenOrientation.LANDSCAPE_SENSOR, respol, mCamera);
 		return options;
@@ -42,8 +41,14 @@ public class BBBActivity extends BaseGameActivity {
 	@Override
 	public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback)
 			throws Exception {
+		mCamera.set(0, 0, mResolutionPolicy.getCurrentWidth(), CAMERA_HEIGHT);
 		mCurrentScene = createSplashScene();
 		pOnCreateSceneCallback.onCreateSceneFinished(mCurrentScene);
+	}
+	
+	/** retrieve currently chosen relative width */
+	public int getCurrentWidth() {
+		return mResolutionPolicy.getCurrentWidth();
 	}
 
 	@Override
@@ -52,8 +57,8 @@ public class BBBActivity extends BaseGameActivity {
 		mEngine.registerUpdateHandler(new TimerHandler(2, new ITimerCallback() {
 			@Override
 			public void onTimePassed(TimerHandler pTimerHandler) {
-//				mEngine.unregisterUpdateHandler(pTimerHandler);
-//				BBBActivity.this.startMenuScene();
+				mEngine.unregisterUpdateHandler(pTimerHandler);
+				BBBActivity.this.startMenuScene();
 			}
 		}));
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
@@ -65,13 +70,11 @@ public class BBBActivity extends BaseGameActivity {
 	}
 	
 	void startMenuScene() {
-		Scene scene = new SplashScene(this);
-		scene.setBackground(new Background(.4f, .8f, .6f));
+		Scene scene = new GameScene(this);
 		Scene oldScene = mCurrentScene;
 		mEngine.setScene(scene);
 		mCurrentScene = scene;
 		oldScene.dispose();
-		
 	}
 
 }
