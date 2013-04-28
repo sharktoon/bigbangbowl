@@ -1,20 +1,25 @@
 package com.example.bigbangbowl.game;
 
+import org.andengine.engine.Engine;
+import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.entity.Entity;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.input.touch.detector.PinchZoomDetector;
+import org.andengine.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
+import org.andengine.input.touch.detector.ScrollDetector;
+import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
+import org.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
 
-import android.util.Log;
-
 import com.example.bigbangbowl.BBBActivity;
 
-public class GameScene extends Scene implements IOnSceneTouchListener {
+public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDetectorListener, IPinchZoomDetectorListener {
 	
 	/** number of tiles - width */
 	private static final int MAP_WIDTH = 24;
@@ -36,8 +41,19 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 	private Entity mMapDisplay;
 	/** the pitch data */
 	private ThePitch mPitch;
+	/** the camera... stored for convenience manipulation */
+	private ZoomCamera mZoomCamera;
+	/** the engine */
+	private Engine mEngine;
+	private SurfaceScrollDetector mScrollDetector;
+	private PinchZoomDetector mPinchZoomDetector;
 	
-	public GameScene(BBBActivity activity) {
+	/** the hud */
+	private BowlHud mHud;
+	
+	public GameScene(BBBActivity activity, ZoomCamera camera) {
+		mEngine = activity.getEngine();
+		mZoomCamera = camera;
 		mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 4 * 256, 256);
 		mFieldTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity, "gfx/field_green00.png", 0 * 256, 0);
 		mFieldTexture1 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity, "gfx/field_green01.png", 1 * 256, 0);
@@ -52,8 +68,8 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 		
 		this.setBackground(new Background(0, 0, 0));
 		
-		final float centerX = activity.getCurrentWidth() / 2;
-		final float centerY = BBBActivity.CAMERA_HEIGHT / 2;
+//		final float centerX = activity.getCurrentWidth() / 2;
+//		final float centerY = BBBActivity.CAMERA_HEIGHT / 2;
 		
 		Entity map = new Entity(0, 0);
 		
@@ -101,19 +117,33 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 		
 		this.attachChild(mMapDisplay);
 		
-		this.setTouchAreaBindingOnActionDownEnabled(true);
+		this.setOnAreaTouchTraversalFrontToBack();
+
+		this.mScrollDetector = new SurfaceScrollDetector(this);
+		this.mPinchZoomDetector = new PinchZoomDetector(this);
+
 		this.setOnSceneTouchListener(this);
+		this.setTouchAreaBindingOnActionDownEnabled(true);
+		
+		mHud = new BowlHud();
+		mHud.prepareResources(activity);
+		mZoomCamera.setHUD(mHud);
 	}
 
 	@Override
 	public void dispose() {
 		mPitch.dispose();
+		mHud.detachSelf();
+		mHud.dispose();
 		
 		mFieldTexture0 = null;
 		mFieldTexture1 = null;
 		mFieldTextureLeft = null;
 		mFieldTextureRight = null;
 		mTextureAtlas.unload();
+		
+		mEngine = null;
+		mZoomCamera = null;
 		
 		super.dispose();
 	}
@@ -123,10 +153,24 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 	/** location of touch */
 	float mTouchStartX, mTouchStartY;
 	/** previous recorded touch location */
-	float mTouchLastX, mTouchLastY;
+	float mTouchDistance;
+	private float mPinchZoomStartedCameraZoomFactor;
 
 	@Override
 	public boolean onSceneTouchEvent(Scene scene, TouchEvent touchEvent) {
+		this.mPinchZoomDetector.onTouchEvent(touchEvent);
+
+		if(this.mPinchZoomDetector.isZooming()) {
+			this.mScrollDetector.setEnabled(false);
+			return true;
+		} else {
+			if(touchEvent.isActionDown()) {
+				this.mScrollDetector.setEnabled(true);
+				mTouchDistance = 0;
+			}
+			this.mScrollDetector.onTouchEvent(touchEvent);
+		}
+		
 		float scale = mMapDisplay.getScaleX();
 		float minX = mMapDisplay.getX();
 		float maxX = minX + scale * TILE_PIXELS * MAP_WIDTH;
@@ -143,8 +187,6 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 				mTouchStartX = x;
 				mTouchStartY = y;
 				mHasTouch = true;
-				mTouchLastX = x;
-				mTouchLastY = y;
 				break;
 			case TouchEvent.ACTION_UP:
 				if(!mHasTouch) return false;
@@ -155,6 +197,14 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 					int tileX = (int)((x - minX) / scale) / TILE_PIXELS;
 					int tileY = (int)((y - minY) / scale) / TILE_PIXELS;
 					mPitch.clickedTile(tileX, tileY);
+					
+					int steps = mPitch.getCurrentSteps();
+					int limit = mPitch.getCurrentMovementLimit();
+					if(limit > 0) {
+						mHud.setMovement(limit - steps, limit);
+					} else {
+						mHud.hideMovement();
+					}
 //					if(0 <= tileX && tileX < MAP_WIDTH && 0 <= tileY && tileY < MAP_HEIGHT) {
 //						Log.w("BBB", "clicked Tile (" + tileX + ";" + tileY + ")");
 //					}
@@ -162,17 +212,6 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 				mHasTouch = false;
 				break;
 			case TouchEvent.ACTION_MOVE:
-				if(!mHasTouch) return false;
-				float movex = x - mTouchLastX;
-				float movey = y - mTouchLastY;
-				
-				float newX = minX + movex;
-				float newY = minY + movey;
-				// TODO proper borders
-				mMapDisplay.setPosition(newX, newY);
-
-				mTouchLastX = x;
-				mTouchLastY = y;
 				break;
 			}
 			return true;
@@ -181,5 +220,47 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 		return false;
 	}
 
+	@Override
+	public void onScrollStarted(final ScrollDetector pScollDetector, final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY / zoomFactor);
+	}
+
+	@Override
+	public void onScroll(final ScrollDetector pScollDetector, final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY / zoomFactor);
+		
+		mTouchDistance += pDistanceX * pDistanceX + pDistanceY * pDistanceY;
+		if(mTouchDistance > 250) mHasTouch = false;
+	}
 	
+	@Override
+	public void onScrollFinished(final ScrollDetector pScollDetector, final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY / zoomFactor);
+	}
+
+	@Override
+	public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
+		this.mPinchZoomStartedCameraZoomFactor = this.mZoomCamera.getZoomFactor();
+	}
+
+	@Override
+	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+		this.mZoomCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+	}
+
+	@Override
+	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+		this.mZoomCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+	}
+
+	@Override
+	protected void onManagedUpdate(float pSecondsElapsed) {
+		mPitch.update(pSecondsElapsed);
+		
+		super.onManagedUpdate(pSecondsElapsed);
+	}
+
 }

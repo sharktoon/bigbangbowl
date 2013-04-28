@@ -1,6 +1,6 @@
 package com.example.bigbangbowl;
 
-import org.andengine.engine.camera.Camera;
+import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
@@ -12,7 +12,7 @@ import com.example.bigbangbowl.game.GameScene;
 import com.example.bigbangbowl.scenes.SplashScene;
 
 public class BBBActivity extends BaseGameActivity {
-	private Camera mCamera;
+	private ZoomCamera mCamera;
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
 	
@@ -24,7 +24,7 @@ public class BBBActivity extends BaseGameActivity {
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
-		mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+		mCamera = new ZoomCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 		FixedHeightResolutionPolicy respol = new FixedHeightResolutionPolicy(CAMERA_HEIGHT, mCamera);
 		mResolutionPolicy = respol;
 		EngineOptions options = new EngineOptions(true, ScreenOrientation.LANDSCAPE_SENSOR, respol, mCamera);
@@ -58,7 +58,7 @@ public class BBBActivity extends BaseGameActivity {
 			@Override
 			public void onTimePassed(TimerHandler pTimerHandler) {
 				mEngine.unregisterUpdateHandler(pTimerHandler);
-				BBBActivity.this.startMenuScene();
+				BBBActivity.this.startGameScene();
 			}
 		}));
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
@@ -69,8 +69,8 @@ public class BBBActivity extends BaseGameActivity {
 		return splash;
 	}
 	
-	void startMenuScene() {
-		Scene scene = new GameScene(this);
+	void startGameScene() {
+		Scene scene = new GameScene(this, mCamera);
 		Scene oldScene = mCurrentScene;
 		mEngine.setScene(scene);
 		mCurrentScene = scene;

@@ -43,7 +43,13 @@ public class FixedHeightResolutionPolicy implements IResolutionPolicy {
 			scale = mHeight / (float)measuredHeight;
 		}
 		mCurrentWidth = (int)Math.ceil(measuredWidth * scale);
-		mCamera.set(0, 0, mCurrentWidth, mHeight);
+		float xmin = mCamera.getXMin();
+//		float xmax = mCamera.getXMax();
+		float ymin = mCamera.getYMin();
+		float ymax = mCamera.getYMax();
+		float curh = ymax - ymin;
+		float cameraScale = curh / mHeight;
+		mCamera.set(xmin, ymin, xmin + mCurrentWidth * cameraScale, ymax);
 		
 		pRenderSurfaceView.setMeasuredDimensionProxy(measuredWidth, measuredHeight);
 	}
