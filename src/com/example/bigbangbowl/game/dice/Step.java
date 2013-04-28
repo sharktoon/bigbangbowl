@@ -28,6 +28,9 @@ public class Step {
     public int minDodgeRoll;
     /** gfi requrired */
     public boolean gfi = false;
+    
+    /** block */
+    public int blockDice = 0;
 
     /** chance to fail - in percent [0;1] */
     public float successChance;

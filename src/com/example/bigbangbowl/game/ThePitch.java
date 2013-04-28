@@ -53,14 +53,17 @@ public class ThePitch {
     /** selector images */
     private TextureRegion mSelectorTexture0;
     private TextureRegion mSelectorTexture1;
+    private TextureRegion mSelectorTexture2;
     /** hint images */
     private TextureRegion mHintTexture0;
     /** blood stain */
     private TextureRegion mBloodTexture0;
 
     /** the highlight thingy */
-    private Sprite mSelector;
+    private Sprite mSelector, mAttackSelector;
     private Vector<Step> mSelectedPath = new Vector<Step>();
+    /** path has an attack - so must roll first */
+    private boolean mPathHasAttack;
 
     /** flag to block input, while executing plan */
     private boolean mExecutingPlan;
@@ -116,6 +119,8 @@ public class ThePitch {
                 "gfx/selector00.png", 196 * 4 + 0 * 128, 0);
         mSelectorTexture1 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
                 "gfx/selector01.png", 196 * 4 + 1 * 128, 0);
+        mSelectorTexture2 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/selector02.png", 196 * 4 + 1 * 128, 128);
 
         mHintTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
                 "gfx/selector03.png", 196 * 4 + 2 * 128, 0);
@@ -125,6 +130,7 @@ public class ThePitch {
         mTextureAtlas.load();
 
         mSelector = new Sprite(0, 0, mSelectorTexture0, mVbo);
+        mAttackSelector = new Sprite(0, 0, mSelectorTexture2, mVbo);
 
         mHintSprites = new Vector<Sprite>(8);
         for (int i = 0; i < 8; ++i) {
@@ -173,7 +179,7 @@ public class ThePitch {
         mGfxMap = map;
         mGfxMapBg = new Entity();
         mGfxMap.attachChild(mGfxMapBg);
-        
+
         int places0[] = { 11, 3, 11, 4, 11, 5, 10, 7, 10, 1, 5, 4 };
         int places1[] = { 12, 3, 12, 4, 12, 5, 13, 7, 13, 1, 20, 4 };
         for (int i = 0; i < places0.length / 2; ++i) {
@@ -244,6 +250,9 @@ public class ThePitch {
         if (!mSelector.hasParent()) {
             mGfxMap.attachChild(mSelector);
         }
+        if (!mAttackSelector.hasParent()) {
+            mGfxMap.attachChild(mAttackSelector);
+        }
 
         int index = tileX + tileY * PITCH_WIDTH;
         if (mPitch[index] != null && mPitch[index].getTeam() == mCurrentTeam && mPitch[index].canAct()) {
@@ -261,7 +270,7 @@ public class ThePitch {
             int lastPosX = mSelectedPiece.getPositionX();
             int lastPosY = mSelectedPiece.getPositionY();
 
-            boolean fail = false;
+            boolean fail = mPathHasAttack;
             boolean showHint = false;
             if (tileX == lastPosX && tileY == lastPosY) {
                 fail = true;
@@ -271,6 +280,19 @@ public class ThePitch {
                 fail = true;
                 showHint = true;
                 // TODO add attack here!
+                // TODO add BLITZ check here
+                if (mSelectedPath.size() == 0) {
+                    if (mPitch[index].getTeam() != mSelectedPiece.getTeam()) {
+                        showHint = false;
+                        mPathHasAttack = true;
+                        mAttackSelector.setVisible(true);
+                        mAttackSelector.setPosition(tileX * GameScene.TILE_PIXELS, tileY * GameScene.TILE_PIXELS);
+
+                        Step step = makeBlockStep(tileX, tileY);
+                        step.sprite = null;
+                        mSelectedPath.add(step);
+                    }
+                }
             }
             for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
                 Step step = mSelectedPath.get(i);
@@ -348,6 +370,105 @@ public class ThePitch {
         if (mSelectedPath.size() >= mSelectedPiece.getRemainingMove()) {
             step.gfi = true;
             step.successChance *= 5.0f / 6.0f;
+        }
+
+        return step;
+    }
+
+    private int getBlockDice(int tileX, int tileY, PlayerPiece source) {
+        int dice = 1;
+        PlayerPiece target = null;
+
+        Vector<PlayerPiece> candidates = new Vector<PlayerPiece>();
+        for (int x = tileX - 1; x <= tileX + 1; ++x) {
+            if (0 > x || x >= PITCH_WIDTH) continue;
+            for (int y = tileY - 1; y <= tileY + 1; ++y) {
+                if (0 > y || y >= PITCH_HEIGHT) continue;
+                int index = x + y * PITCH_WIDTH;
+                if (x == tileX && y == tileY) {
+                    target = mPitch[index];
+                    continue;
+                }
+                if (mPitch[index] != null && mPitch[index] != source && mPitch[index].getTeam() == source.getTeam()) {
+                    candidates.add(mPitch[index]);
+                }
+            }
+        }
+        for (int x = source.getPositionX() - 1; x <= source.getPositionX() + 1; ++x) {
+            if (0 > x || x >= PITCH_WIDTH) continue;
+            for (int y = source.getPositionY() - 1; y <= source.getPositionY() + 1; ++y) {
+                if (0 > y || y >= PITCH_HEIGHT) continue;
+                int index = x + y * PITCH_WIDTH;
+                if (mPitch[index] != null && mPitch[index] != source && mPitch[index] != target
+                        && mPitch[index].getTeam() != source.getTeam()) {
+                    candidates.add(mPitch[index]);
+                }
+            }
+        }
+
+        int defSt = target.getST();
+        int attSt = source.getST();
+
+        for (int i = 0, n = candidates.size(); i < n; ++i) {
+            PlayerPiece piece = candidates.get(i);
+            int baseX = piece.getPositionX();
+            int baseY = piece.getPositionY();
+            boolean removed = !piece.getTackleZone();
+            if (!removed) {
+                for (int x = baseX - 1; x <= baseX + 1; ++x) {
+                    if (0 > x || x >= PITCH_WIDTH) continue;
+                    for (int y = baseY - 1; y <= baseY + 1; ++y) {
+                        if (0 > y || y >= PITCH_HEIGHT) continue;
+                        int index = x + y * PITCH_WIDTH;
+                        if (mPitch[index] != null && mPitch[index] != source && mPitch[index] != target
+                                && mPitch[index].getTeam() != piece.getTeam()) {
+                            candidates.remove(i);
+                            --i;
+                            --n;
+                            removed = true;
+                            break;
+                        }
+                    }
+                    if (removed) break;
+                }
+            }
+            if (!removed) {
+                if (piece.getTeam() == source.getTeam()) ++attSt;
+                else ++defSt;
+            }
+        }
+
+        if (defSt > 2 * attSt) dice = -3;
+        else if (defSt > attSt) dice = -2;
+        else if (defSt == attSt) dice = 1;
+        else if (defSt <= 2 * attSt) dice = 2;
+        else dice = 3;
+
+        return dice;
+    }
+
+    public Step makeBlockStep(int tileX, int tileY) {
+        Step step = new Step();
+        step.tileX = tileX;
+        step.tileY = tileY;
+        step.type = Step.TYPE_BLOCK;
+        step.successChance = 1;
+
+        int dice = getBlockDice(tileX, tileY, mSelectedPiece);
+        step.blockDice = dice;
+
+        if (dice > 0) {
+            float failchance = 1;
+            for (int i = 0; i < dice; ++i) {
+                failchance *= 2.0f / 6.0f;
+            }
+            step.successChance = 1 - failchance;
+        } else {
+            float successchance = 1;
+            for (int i = 0; i > dice; --i) {
+                successchance *= 4.0f / 6.0f;
+            }
+            step.successChance = successchance;
         }
 
         return step;
@@ -478,8 +599,19 @@ public class ThePitch {
     /** the current dice log receiver */
     IDiceLogReceiver mLogger;
 
-    /** execute the current step from the plan */
     private boolean executeNextPlannedStep() {
+        Step step = mSelectedPath.get(0);
+        switch (step.type) {
+        case Step.TYPE_MOVE:
+            return executeNextMoveStep();
+        case Step.TYPE_BLOCK:
+            return executeNextBlockStep();
+        }
+        return true;
+    }
+
+    /** execute the current step from the plan */
+    private boolean executeNextMoveStep() {
         boolean failed = false;
         int index = 0;
         Step step = mSelectedPath.get(index);
@@ -570,6 +702,94 @@ public class ThePitch {
         return !failed;
     }
 
+    private boolean executeNextBlockStep() {
+        boolean failed = false;
+        StringBuffer blockLog = new StringBuffer();
+        StringBuffer fakeChoiceLog = new StringBuffer();
+        final String[] logNames = { "att-down", "bothdown", "push", "push", "def-stumbles", "def-down" };
+
+        Step step = mSelectedPath.get(0);
+        int dicecount = Math.abs(step.blockDice);
+        Vector<Integer> dicerolls = new Vector<Integer>(dicecount);
+
+        blockLog.append("BLOCK ROLLS ");
+        int logType;
+        blockLog.append("[");
+        blockLog.append(step.blockDice);
+        blockLog.append("]: ");
+        if (step.blockDice > 0) {
+            logType = IDiceLogReceiver.LOG_NEUTRAL;
+            // blockLog.append("Attackers choice: ");
+        } else {
+            logType = IDiceLogReceiver.LOG_FAILURE;
+            // blockLog.append("Defenders choice: ");
+        }
+
+        // TODO remove fake block dice picking!
+        int bestDie = 1;
+        int worstDie = 6;
+        for (int i = 0; i < dicecount; ++i) {
+            int die = 1 + mRandom.nextInt(6);
+            dicerolls.add(die);
+            if (die > bestDie) bestDie = die;
+            if (die < worstDie) worstDie = die;
+            blockLog.append(logNames[die - 1]);
+            blockLog.append(" ");
+        }
+
+        int chosenDie = bestDie;
+        if (step.blockDice < 0) {
+            chosenDie = worstDie;
+        }
+
+        fakeChoiceLog.append("CHOSE: ");
+        fakeChoiceLog.append(logNames[chosenDie - 1]);
+
+        if (mLogger != null) {
+            mLogger.showDiceLogLine(logType, blockLog);
+            if (chosenDie < 3) mLogger.showDiceLogLine(IDiceLogReceiver.LOG_FAILURE, fakeChoiceLog);
+            else if (chosenDie > 4) mLogger.showDiceLogLine(IDiceLogReceiver.LOG_SUCCESS, fakeChoiceLog);
+            else mLogger.showDiceLogLine(IDiceLogReceiver.LOG_NEUTRAL, fakeChoiceLog);
+        }
+
+        int index = step.tileX + step.tileY * PITCH_WIDTH;
+        PlayerPiece target = mPitch[index];
+        switch (chosenDie) {
+        case 1:
+            // attacker down
+            rollHurtDice(mSelectedPiece);
+            failed = true;
+            break;
+        case 2:
+            // both down
+            rollHurtDice(mSelectedPiece);
+            rollHurtDice(target);
+            failed = true;
+            break;
+        case 3:
+        case 4:
+            // push
+            break;
+        case 5:
+            // defender stumbles
+            rollHurtDice(target);
+            break;
+        case 6:
+            // defender down
+            rollHurtDice(target);
+            break;
+        }
+
+        // TODO BLITZ check here!
+        mSelectedPiece.endTurn();
+        cancelPlannedMove();
+        mCurrentActor = null;
+
+        if (mSelectedPath.size() > 0) mSelectedPath.remove(0);
+        mExecutingPlan = false;
+        return !failed;
+    }
+
     /** actually attempt the planned move */
     public void executePlannedMove(IDiceLogReceiver logger) {
         mLogger = logger;
@@ -586,11 +806,14 @@ public class ThePitch {
     /** cancel previously planned move */
     public void cancelPlannedMove() {
         for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
-            mSelectedPath.get(i).sprite.detachSelf();
+            Sprite sprite = mSelectedPath.get(i).sprite;
+            if (sprite != null) sprite.detachSelf();
         }
         mSelectedPath.clear();
         mSelectedPiece = null;
         mSelector.setVisible(false);
+        mAttackSelector.setVisible(false);
+        mPathHasAttack = false;
     }
 
     private void rollHurtDice(PlayerPiece piece) {
@@ -647,15 +870,16 @@ public class ThePitch {
             if (injuryHurt != null) mLogger.showDiceLogLine(injuryLogType, injuryHurt);
         }
     }
-    
+
     private void removePieceFromField(PlayerPiece piece) {
         Entity entity = piece.getEntity();
         entity.detachSelf();
 
         int index = piece.getPositionX() + piece.getPositionY() * PITCH_WIDTH;
         mPitch[index] = null;
-        
-        Sprite blood = new Sprite(piece.getPositionX() * GameScene.TILE_PIXELS, piece.getPositionY() * GameScene.TILE_PIXELS, mBloodTexture0, mVbo);
+
+        Sprite blood = new Sprite(piece.getPositionX() * GameScene.TILE_PIXELS, piece.getPositionY()
+                * GameScene.TILE_PIXELS, mBloodTexture0, mVbo);
         mGfxMapBg.attachChild(blood);
     }
 }
