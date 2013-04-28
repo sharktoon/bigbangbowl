@@ -131,4 +131,43 @@ public class PlayerPiece {
     public boolean getTackleZone() {
         return mState == STATE_STANDING;
     }
+
+    /** current turn already acted */
+    private boolean mTurnDone;
+    /** current turn remaining move [-2;MV] */
+    private int mRemainingMove;
+
+    /** reset values when teams turn begins */
+    public void resetTeamTurn() {
+        mRemainingMove = mMovementValue;
+        mTurnDone = false;
+        if (mState == STATE_STUNNED) {
+            mState = STATE_DOWN;
+            mTurnDone = true;
+        }
+    }
+
+    /** retrieve how much movement is left this turn */
+    public int getRemainingMove() {
+        return mRemainingMove;
+    }
+
+    /** uses up movement */
+    public void useMovement(int amount) {
+        mRemainingMove -= amount;
+    }
+
+    /** ends this players turn */
+    public void endTurn() {
+        mTurnDone = true;
+    }
+
+    /** check if this piece can act... still */
+    public boolean canAct() {
+        if(mTurnDone) return false;
+        if(mState == STATE_STANDING) return true;
+        if(mState == STATE_DOWN) return true;
+        return false;
+    }
+
 }

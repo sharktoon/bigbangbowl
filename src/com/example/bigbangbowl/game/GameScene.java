@@ -18,9 +18,10 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 
 import com.example.bigbangbowl.BBBActivity;
 import com.example.bigbangbowl.game.BowlHud.IConfirmationCallback;
+import com.example.bigbangbowl.game.BowlHud.IEndturnCallback;
 
 public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDetectorListener,
-        IPinchZoomDetectorListener, IConfirmationCallback {
+        IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback {
 
     /** number of tiles - width */
     private static final int MAP_WIDTH = 24;
@@ -66,9 +67,14 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
                 "gfx/field_green03.png", 3 * 256, 0);
 
         mTextureAtlas.load();
+        
+        mHud = new BowlHud();
+        mHud.prepareResources(activity);
+        mHud.setEndturnCallback(this);
+        mZoomCamera.setHUD(mHud);
 
         mPitch = new ThePitch();
-        mPitch.loadResources(activity);
+        mPitch.loadResources(activity, mHud);
         mPitch.createTeams(activity);
 
         this.setBackground(new Background(0, 0, 0));
@@ -130,9 +136,6 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
         this.setOnSceneTouchListener(this);
         this.setTouchAreaBindingOnActionDownEnabled(true);
 
-        mHud = new BowlHud();
-        mHud.prepareResources(activity);
-        mZoomCamera.setHUD(mHud);
     }
 
     @Override
@@ -205,7 +208,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
 
                     int steps = mPitch.getCurrentSteps();
                     int limit = mPitch.getCurrentMovementLimit();
-                    if (limit > 0) {
+                    if (mPitch.hasSelection()) {
                         mHud.setMovement(limit - steps, limit);
                         mHud.setCurrentSuccessChance(mPitch.getCurrentMoveSuccessChance());
                     } else {
@@ -304,6 +307,11 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
         mPitch.cancelPlannedMove();
         mHud.hideMovement();
         hideConfirmationSigns();
+    }
+
+    @Override
+    public void onEndturnSelected() {
+        mPitch.switchTeams();
     }
 
 }

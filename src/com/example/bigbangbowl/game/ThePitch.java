@@ -72,6 +72,8 @@ public class ThePitch {
 
     /** currently selected piece */
     private PlayerPiece mSelectedPiece;
+    /** currently acting piece */
+    private PlayerPiece mCurrentActor;
 
     /** team 0 */
     private PlayerPiece[] mTeam0;
@@ -87,10 +89,16 @@ public class ThePitch {
     private Entity mGfxMap;
     /** the random number supplier... */
     private Random mRandom;
+    /** the hud... */
+    private BowlHud mHud;
+
+    /** team which may move atm */
+    private int mCurrentTeam;
 
     /** load resources */
-    public void loadResources(BBBActivity activity) {
+    public void loadResources(BBBActivity activity, BowlHud hud) {
         mVbo = activity.getVertexBufferObjectManager();
+        mHud = hud;
         mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 4 * 196 + 3 * 128, 256);
 
         mChaosBeastmanTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
@@ -180,11 +188,15 @@ public class ThePitch {
 
             mPitch[x + y * PITCH_WIDTH] = mTeam1[i];
         }
+
+        mCurrentTeam = mRandom.nextInt(2);
+        switchTeams();
     }
 
     public void dispose() {
         mVbo = null;
         mGfxMap = null;
+        mHud = null;
 
         mChaosBeastmanTexture = null;
         mChaosWarriorTexture = null;
@@ -195,6 +207,25 @@ public class ThePitch {
         mSelectorTexture1 = null;
 
         mTextureAtlas.unload();
+    }
+
+    public void switchTeams() {
+        cancelPlannedMove();
+
+        PlayerPiece[] team;
+        if (mCurrentTeam == 0) {
+            mCurrentTeam = 1;
+            team = mTeam1;
+        } else {
+            mCurrentTeam = 0;
+            team = mTeam0;
+        }
+
+        for (int i = 0; i < team.length; ++i) {
+            team[i].resetTeamTurn();
+        }
+
+        mHud.setCurrentTeam(mCurrentTeam);
     }
 
     /** informs the pitch that the user chose to tap the given tile */
@@ -208,7 +239,7 @@ public class ThePitch {
         }
 
         int index = tileX + tileY * PITCH_WIDTH;
-        if (mPitch[index] != null) {
+        if (mPitch[index] != null && mPitch[index].getTeam() == mCurrentTeam && mPitch[index].canAct()) {
             cancelPlannedMove();
 
             mSelectedPiece = mPitch[index];
@@ -229,6 +260,11 @@ public class ThePitch {
                 fail = true;
                 showHint = true;
             }
+            if (mPitch[index] != null) {
+                fail = true;
+                showHint = true;
+                // TODO add attack here!
+            }
             for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
                 Step step = mSelectedPath.get(i);
                 lastPosX = step.tileX;
@@ -244,7 +280,7 @@ public class ThePitch {
                 showHint = true;
             }
 
-            if (mSelectedPath.size() >= 2 + mSelectedPiece.getMV()) {
+            if (mSelectedPath.size() >= 2 + mSelectedPiece.getRemainingMove()) {
                 fail = true;
                 showHint = false;
             }
@@ -302,7 +338,7 @@ public class ThePitch {
             step.successChance = 1 - (diceChance - 1) / 6.0f;
         }
 
-        if (mSelectedPath.size() >= mSelectedPiece.getMV()) {
+        if (mSelectedPath.size() >= mSelectedPiece.getRemainingMove()) {
             step.gfi = true;
             step.successChance *= 5.0f / 6.0f;
         }
@@ -318,7 +354,12 @@ public class ThePitch {
     /** how many steps the currently selected player may make */
     public int getCurrentMovementLimit() {
         if (mSelectedPiece == null) return -1;
-        return mSelectedPiece.getMV();
+        return mSelectedPiece.getRemainingMove();
+    }
+
+    /** check if there's currently someone selected */
+    public boolean hasSelection() {
+        return mSelectedPiece != null;
     }
 
     /** chance to succeed the current move */
@@ -414,7 +455,15 @@ public class ThePitch {
             mExecutingTimer -= dt;
             if (mExecutingTimer <= 0) {
                 mExecutingTimer += STEP_DURATION;
-                executeNextPlannedStep();
+                boolean success = executeNextPlannedStep();
+
+                if (!success) {
+                    if (mLogger != null) {
+                        mLogger.showDiceLogLine(IDiceLogReceiver.LOG_NEUTRAL, "=> TURNOVER");
+                    }
+                    mHud.showWarningTurnover();
+                    switchTeams();
+                }
             }
         }
     }
@@ -458,15 +507,18 @@ public class ThePitch {
             log.append(7 - mSelectedPiece.getAG());
             log.append("+; rolled ");
             log.append(die);
-            log.append(" + 1");// (dodge)");
-            int tackleZones = getTackleZones(step.tileX, step.tileY, mSelectedPiece.getTeam());
-            if (tackleZones > 0) {
-                log.append(" - ");
-                log.append(tackleZones);
-                // log.append("(into tacklezones)");
+            if (die > 1) {
+                log.append(" + 1");// (dodge)");
+                int tackleZones = getTackleZones(step.tileX, step.tileY, mSelectedPiece.getTeam());
+                if (tackleZones > 0) {
+                    log.append(" - ");
+                    log.append(tackleZones);
+                    log.append("(TZ)");
+                    // log.append("(into tacklezones)");
+                }
+                log.append(" = ");
+                log.append(die + 1 - tackleZones);
             }
-            log.append(" = ");
-            log.append(die + 1 - tackleZones);
 
             mLogger.showDiceLogLine(logtype, log);
         }
@@ -495,6 +547,8 @@ public class ThePitch {
         int newIndex = step.tileX + step.tileY * PITCH_WIDTH;
         mPitch[newIndex] = mSelectedPiece;
 
+        mSelectedPiece.useMovement(1);
+
         if (failed) {
             cancelPlannedMove();
             mExecutingPlan = false;
@@ -510,10 +564,14 @@ public class ThePitch {
     /** actually attempt the planned move */
     public void executePlannedMove(IDiceLogReceiver logger) {
         mLogger = logger;
-        mLogger.showDiceLogLine(IDiceLogReceiver.LOG_NEUTRAL, "---");
         mExecutingPlan = true;
         mExecutingTimer = 0;
 
+        if (mCurrentActor != null && mCurrentActor != mSelectedPiece) {
+            mCurrentActor.endTurn();
+            mLogger.showDiceLogLine(IDiceLogReceiver.LOG_NEUTRAL, "---");
+        }
+        mCurrentActor = mSelectedPiece;
     }
 
     /** cancel previously planned move */
