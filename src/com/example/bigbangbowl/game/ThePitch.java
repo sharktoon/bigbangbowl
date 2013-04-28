@@ -55,6 +55,8 @@ public class ThePitch {
     private TextureRegion mSelectorTexture1;
     /** hint images */
     private TextureRegion mHintTexture0;
+    /** blood stain */
+    private TextureRegion mBloodTexture0;
 
     /** the highlight thingy */
     private Sprite mSelector;
@@ -86,7 +88,7 @@ public class ThePitch {
     /** to create sprites on the fly */
     private VertexBufferObjectManager mVbo;
     /** the graphical map thingy */
-    private Entity mGfxMap;
+    private Entity mGfxMap, mGfxMapBg;
     /** the random number supplier... */
     private Random mRandom;
     /** the hud... */
@@ -117,6 +119,8 @@ public class ThePitch {
 
         mHintTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
                 "gfx/selector03.png", 196 * 4 + 2 * 128, 0);
+        mBloodTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/blood.png", 196 * 4 + 2 * 128, 128);
 
         mTextureAtlas.load();
 
@@ -167,6 +171,9 @@ public class ThePitch {
 
     public void placeTeams(Entity map) {
         mGfxMap = map;
+        mGfxMapBg = new Entity();
+        mGfxMap.attachChild(mGfxMapBg);
+        
         int places0[] = { 11, 3, 11, 4, 11, 5, 10, 7, 10, 1, 5, 4 };
         int places1[] = { 12, 3, 12, 4, 12, 5, 13, 7, 13, 1, 20, 4 };
         for (int i = 0; i < places0.length / 2; ++i) {
@@ -550,6 +557,8 @@ public class ThePitch {
         mSelectedPiece.useMovement(1);
 
         if (failed) {
+            mSelectedPiece.setState(PlayerPiece.STATE_DOWN);
+            rollHurtDice(mSelectedPiece);
             cancelPlannedMove();
             mExecutingPlan = false;
         } else {
@@ -582,5 +591,71 @@ public class ThePitch {
         mSelectedPath.clear();
         mSelectedPiece = null;
         mSelector.setVisible(false);
+    }
+
+    private void rollHurtDice(PlayerPiece piece) {
+        int armorLogType = IDiceLogReceiver.LOG_NEUTRAL;
+        int injuryLogType = IDiceLogReceiver.LOG_NEUTRAL;
+        int die0 = 1 + mRandom.nextInt(6);
+        int die1 = 1 + mRandom.nextInt(6);
+
+        StringBuffer armorHurt = new StringBuffer();
+        StringBuffer injuryHurt = null;
+        if (die0 + die1 > piece.getAV()) {
+            armorHurt.append("ARMOR BROKEN");
+            injuryHurt = new StringBuffer();
+            int die2 = 1 + mRandom.nextInt(6);
+            int die3 = 1 + mRandom.nextInt(6);
+            int injuryRoll = die2 + die3;
+            if (injuryRoll <= 7) {
+                // STUNNED
+                injuryHurt.append("STUNNED");
+                piece.setState(PlayerPiece.STATE_STUNNED);
+            } else if (injuryRoll <= 9) {
+                // KNOCKED OUT
+                injuryHurt.append("KNOCKED OUT");
+                piece.setState(PlayerPiece.STATE_KNOCKEDOUT);
+                removePieceFromField(piece);
+                injuryLogType = IDiceLogReceiver.LOG_SUCCESS;
+            } else {
+                // INJURY
+                injuryHurt.append("CASUALTY");
+                piece.setState(PlayerPiece.STATE_INJURED);
+                removePieceFromField(piece);
+                injuryLogType = IDiceLogReceiver.LOG_SUCCESS;
+            }
+            injuryHurt.append(" - injury roll: ");
+            injuryHurt.append(die2);
+            injuryHurt.append("+");
+            injuryHurt.append(die3);
+            injuryHurt.append(" = ");
+            injuryHurt.append(injuryRoll);
+        } else {
+            armorHurt.append("ARMOR HELD");
+        }
+        armorHurt.append(" - AV");
+        armorHurt.append(piece.getAV());
+        armorHurt.append(" rolled ");
+        armorHurt.append(die0);
+        armorHurt.append("+");
+        armorHurt.append(die1);
+        armorHurt.append(" = ");
+        armorHurt.append(die0 + die1);
+
+        if (mLogger != null) {
+            mLogger.showDiceLogLine(armorLogType, armorHurt);
+            if (injuryHurt != null) mLogger.showDiceLogLine(injuryLogType, injuryHurt);
+        }
+    }
+    
+    private void removePieceFromField(PlayerPiece piece) {
+        Entity entity = piece.getEntity();
+        entity.detachSelf();
+
+        int index = piece.getPositionX() + piece.getPositionY() * PITCH_WIDTH;
+        mPitch[index] = null;
+        
+        Sprite blood = new Sprite(piece.getPositionX() * GameScene.TILE_PIXELS, piece.getPositionY() * GameScene.TILE_PIXELS, mBloodTexture0, mVbo);
+        mGfxMapBg.attachChild(blood);
     }
 }

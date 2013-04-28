@@ -145,6 +145,9 @@ public class PlayerPiece {
             mState = STATE_DOWN;
             mTurnDone = true;
         }
+        if (mState == STATE_DOWN) {
+            mRemainingMove -= 3;
+        }
     }
 
     /** retrieve how much movement is left this turn */
@@ -154,6 +157,7 @@ public class PlayerPiece {
 
     /** uses up movement */
     public void useMovement(int amount) {
+        if (mState == STATE_DOWN) mState = STATE_STANDING;
         mRemainingMove -= amount;
     }
 
@@ -164,9 +168,9 @@ public class PlayerPiece {
 
     /** check if this piece can act... still */
     public boolean canAct() {
-        if(mTurnDone) return false;
-        if(mState == STATE_STANDING) return true;
-        if(mState == STATE_DOWN) return true;
+        if (mTurnDone) return false;
+        if (mState == STATE_STANDING) return true;
+        if (mState == STATE_DOWN) return true;
         return false;
     }
 
