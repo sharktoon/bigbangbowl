@@ -1,6 +1,5 @@
 package com.example.bigbangbowl.game;
 
-import org.andengine.engine.Engine;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.entity.Entity;
 import org.andengine.entity.scene.IOnSceneTouchListener;
@@ -45,8 +44,8 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
     private ThePitch mPitch;
     /** the camera... stored for convenience manipulation */
     private ZoomCamera mZoomCamera;
-    /** the engine */
-    private Engine mEngine;
+    // /** the engine */
+    // private Engine mEngine;
     private SurfaceScrollDetector mScrollDetector;
     private PinchZoomDetector mPinchZoomDetector;
 
@@ -54,7 +53,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
     private BowlHud mHud;
 
     public GameScene(BBBActivity activity, ZoomCamera camera) {
-        mEngine = activity.getEngine();
+        // mEngine = activity.getEngine();
         mZoomCamera = camera;
         mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 4 * 256, 256);
         mFieldTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
@@ -148,7 +147,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
         mFieldTextureRight = null;
         mTextureAtlas.unload();
 
-        mEngine = null;
+        // mEngine = null;
         mZoomCamera = null;
 
         super.dispose();
@@ -189,7 +188,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
         if (minX < x && x < maxX && minY < y && y < maxY) {
             switch (touchEvent.getAction()) {
             case TouchEvent.ACTION_DOWN:
-//                if (mHasTouch) return false;
+                // if (mHasTouch) return false;
                 mTouchStartX = x;
                 mTouchStartY = y;
                 mHasTouch = true;
@@ -212,8 +211,8 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
                     } else {
                         mHud.hideMovement();
                     }
-                    
-                    if(steps > 0) {
+
+                    if (steps > 0) {
                         showConfirmationSigns();
                     } else {
                         hideConfirmationSigns();
@@ -277,18 +276,18 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
 
         super.onManagedUpdate(pSecondsElapsed);
     }
-    
+
     /** whether the confirmation stuff is visible, or not */
     private boolean mConfirmationVisible;
-    
+
     private void showConfirmationSigns() {
-        if(mConfirmationVisible) return;
-        
+        if (mConfirmationVisible) return;
+
         mConfirmationVisible = true;
-        
+
         mHud.showConfirmationSigns(this);
     }
-    
+
     private void hideConfirmationSigns() {
         mConfirmationVisible = false;
         mHud.hideConfirmationSigns();
@@ -296,7 +295,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
 
     @Override
     public void onConfirmationAccept() {
-        mPitch.executePlannedMove();
+        mPitch.executePlannedMove(mHud);
         hideConfirmationSigns();
     }
 
@@ -306,6 +305,5 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
         mHud.hideMovement();
         hideConfirmationSigns();
     }
-    
 
 }

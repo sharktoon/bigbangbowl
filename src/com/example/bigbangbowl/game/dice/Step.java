@@ -22,8 +22,12 @@ public class Step {
 
     /** whether or not this involves rolling the dice */
     public boolean dice = false;
+    /** dodge required */
+    public boolean dodge = false;
     /** required dice roll result */
-    public int minRoll;
+    public int minDodgeRoll;
+    /** gfi requrired */
+    public boolean gfi = false;
 
     /** chance to fail - in percent [0;1] */
     public float successChance;

@@ -1,16 +1,23 @@
 package com.example.bigbangbowl.game;
 
+import java.util.Random;
 import java.util.Vector;
 
 import org.andengine.entity.Entity;
+import org.andengine.entity.IEntity;
+import org.andengine.entity.modifier.IEntityModifier;
+import org.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
+import org.andengine.entity.modifier.MoveModifier;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.util.modifier.IModifier;
 
 import com.example.bigbangbowl.BBBActivity;
+import com.example.bigbangbowl.game.dice.IDiceLogReceiver;
 import com.example.bigbangbowl.game.dice.Step;
 
 /**
@@ -33,6 +40,8 @@ public class ThePitch {
     public static final int PIECE_OFFSET_X = -32;
     /** graphical offset for a player piece */
     public static final int PIECE_OFFSET_Y = -128;
+    /** duration of a step */
+    private static final float STEP_DURATION = .5f;
 
     /** complete texture atlas */
     private BitmapTextureAtlas mTextureAtlas;
@@ -50,8 +59,11 @@ public class ThePitch {
     /** the highlight thingy */
     private Sprite mSelector;
     private Vector<Step> mSelectedPath = new Vector<Step>();
-    /** how likely the current path is to fail */
-    private float mPathFailChance = 0;
+
+    /** flag to block input, while executing plan */
+    private boolean mExecutingPlan;
+    /** timer during plan execution */
+    private float mExecutingTimer;
 
     /** how long the hint stuff should (still) be visible */
     private float mHintShowTimer;
@@ -73,6 +85,8 @@ public class ThePitch {
     private VertexBufferObjectManager mVbo;
     /** the graphical map thingy */
     private Entity mGfxMap;
+    /** the random number supplier... */
+    private Random mRandom;
 
     /** load resources */
     public void loadResources(BBBActivity activity) {
@@ -105,6 +119,8 @@ public class ThePitch {
             Sprite sprite = new Sprite(0, 0, mHintTexture0, mVbo);
             mHintSprites.add(sprite);
         }
+
+        mRandom = new Random(System.currentTimeMillis());
     }
 
     public void createTeams(BBBActivity activity) {
@@ -279,13 +295,15 @@ public class ThePitch {
         if (getTackleZones(lastPosX, lastPosY, mSelectedPiece.getTeam()) > 0) {
             int tacklemod = getTackleZones(tileX, tileY, mSelectedPiece.getTeam());
             step.dice = true;
-            step.minRoll = 7 - mSelectedPiece.getAG() - 1 + tacklemod;
+            step.dodge = true;
+            step.minDodgeRoll = 7 - mSelectedPiece.getAG() - 1 + tacklemod;
 
-            int diceChance = Math.max(2, Math.min(step.minRoll, 6));
+            int diceChance = Math.max(2, Math.min(step.minDodgeRoll, 6));
             step.successChance = 1 - (diceChance - 1) / 6.0f;
         }
 
         if (mSelectedPath.size() >= mSelectedPiece.getMV()) {
+            step.gfi = true;
             step.successChance *= 5.0f / 6.0f;
         }
 
@@ -391,11 +409,110 @@ public class ThePitch {
                 hideHints();
             }
         }
+
+        if (mExecutingPlan) {
+            mExecutingTimer -= dt;
+            if (mExecutingTimer <= 0) {
+                mExecutingTimer += STEP_DURATION;
+                executeNextPlannedStep();
+            }
+        }
+    }
+
+    /** the current dice log receiver */
+    IDiceLogReceiver mLogger;
+
+    /** execute the current step from the plan */
+    private boolean executeNextPlannedStep() {
+        boolean failed = false;
+        int index = 0;
+        Step step = mSelectedPath.get(index);
+        if (step.gfi) {
+            int logtype = IDiceLogReceiver.LOG_SUCCESS;
+            StringBuffer log = new StringBuffer();
+            int die = 1 + mRandom.nextInt(6);
+            if (die > 1) {
+                log.append("SUCCESS");
+            } else {
+                log.append("FAILURE");
+                logtype = IDiceLogReceiver.LOG_FAILURE;
+                failed = true;
+            }
+            log.append(" - GFI 2+; rolled ");
+            log.append(die);
+            mLogger.showDiceLogLine(logtype, log);
+        }
+
+        if (!failed && step.dodge) {
+            int logtype = IDiceLogReceiver.LOG_SUCCESS;
+            StringBuffer log = new StringBuffer();
+            int die = 1 + mRandom.nextInt(6);
+            if (die > 1 && die >= step.minDodgeRoll) {
+                log.append("SUCCESS - ");
+            } else {
+                log.append("FAILURE - ");
+                failed = true;
+                logtype = IDiceLogReceiver.LOG_FAILURE;
+            }
+            log.append("Dodge ");
+            log.append(7 - mSelectedPiece.getAG());
+            log.append("+; rolled ");
+            log.append(die);
+            log.append(" + 1");// (dodge)");
+            int tackleZones = getTackleZones(step.tileX, step.tileY, mSelectedPiece.getTeam());
+            if (tackleZones > 0) {
+                log.append(" - ");
+                log.append(tackleZones);
+                // log.append("(into tacklezones)");
+            }
+            log.append(" = ");
+            log.append(die + 1 - tackleZones);
+
+            mLogger.showDiceLogLine(logtype, log);
+        }
+
+        float currentX = mSelectedPiece.getPositionX() * GameScene.TILE_PIXELS;
+        float currentY = mSelectedPiece.getPositionY() * GameScene.TILE_PIXELS;
+        float targetX = step.tileX * GameScene.TILE_PIXELS;
+        float targetY = step.tileY * GameScene.TILE_PIXELS;
+        MoveModifier movemod = new MoveModifier(STEP_DURATION, currentX + PIECE_OFFSET_X, targetX + PIECE_OFFSET_X,
+                currentY + PIECE_OFFSET_Y, targetY + PIECE_OFFSET_Y);
+        IEntityModifierMatcher matcher = new IEntityModifier.IEntityModifierMatcher() {
+            @Override
+            public boolean matches(IModifier<IEntity> pObject) {
+                return pObject instanceof MoveModifier;
+            }
+        };
+        mSelectedPiece.getEntity().unregisterEntityModifiers(matcher);
+        mSelector.unregisterEntityModifiers(matcher);
+        MoveModifier selMove = new MoveModifier(STEP_DURATION, currentX, targetX, currentY, targetY);
+        mSelector.registerEntityModifier(selMove);
+        mSelectedPiece.getEntity().registerEntityModifier(movemod);
+
+        int oldIndex = mSelectedPiece.getPositionX() + mSelectedPiece.getPositionY() * PITCH_WIDTH;
+        mPitch[oldIndex] = null;
+        mSelectedPiece.setPosition(step.tileX, step.tileY);
+        int newIndex = step.tileX + step.tileY * PITCH_WIDTH;
+        mPitch[newIndex] = mSelectedPiece;
+
+        if (failed) {
+            cancelPlannedMove();
+            mExecutingPlan = false;
+        } else {
+            step.sprite.detachSelf();
+            mSelectedPath.remove(index);
+            mExecutingPlan = mSelectedPath.size() > 0;
+        }
+
+        return !failed;
     }
 
     /** actually attempt the planned move */
-    public void executePlannedMove() {
-        // TODO Auto-generated method stub
+    public void executePlannedMove(IDiceLogReceiver logger) {
+        mLogger = logger;
+        mLogger.showDiceLogLine(IDiceLogReceiver.LOG_NEUTRAL, "---");
+        mExecutingPlan = true;
+        mExecutingTimer = 0;
 
     }
 
