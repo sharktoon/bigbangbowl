@@ -22,233 +22,390 @@ import com.example.bigbangbowl.game.dice.Step;
  * 
  */
 public class ThePitch {
-	/** width/length of the pitch */
-	public static final int PITCH_WIDTH = 24;
-	/** height/breadth of the pitch */
-	public static final int PITCH_HEIGHT = 10;
+    /** how long the movement hints are shown */
+    private static final float HINT_SHOW_DURATION = 2.0f;
+    /** width/length of the pitch */
+    public static final int PITCH_WIDTH = 24;
+    /** height/breadth of the pitch */
+    public static final int PITCH_HEIGHT = 10;
 
-	/** graphical offset for a player piece */
-	public static final int PIECE_OFFSET_X = -32;
-	/** graphical offset for a player piece */
-	public static final int PIECE_OFFSET_Y = -128;
+    /** graphical offset for a player piece */
+    public static final int PIECE_OFFSET_X = -32;
+    /** graphical offset for a player piece */
+    public static final int PIECE_OFFSET_Y = -128;
 
-	/** complete texture atlas */
-	private BitmapTextureAtlas mTextureAtlas;
-	/** the combatants graphics */
-	private ITextureRegion mChaosBeastmanTexture;
-	private ITextureRegion mChaosWarriorTexture;
-	private ITextureRegion mVampireThrallTexture;
-	private ITextureRegion mVampireVampireTexture;
-	/** selector images */
-	private TextureRegion mSelectorTexture0;
-	private TextureRegion mSelectorTexture1;
+    /** complete texture atlas */
+    private BitmapTextureAtlas mTextureAtlas;
+    /** the combatants graphics */
+    private ITextureRegion mChaosBeastmanTexture;
+    private ITextureRegion mChaosWarriorTexture;
+    private ITextureRegion mVampireThrallTexture;
+    private ITextureRegion mVampireVampireTexture;
+    /** selector images */
+    private TextureRegion mSelectorTexture0;
+    private TextureRegion mSelectorTexture1;
+    /** hint images */
+    private TextureRegion mHintTexture0;
 
-	/** the highlight thingy */
-	private Sprite mSelector;
-	private Vector<Step> mSelectedPath = new Vector<Step>();
+    /** the highlight thingy */
+    private Sprite mSelector;
+    private Vector<Step> mSelectedPath = new Vector<Step>();
+    /** how likely the current path is to fail */
+    private float mPathFailChance = 0;
 
-	/** currently selected piece */
-	private PlayerPiece mSelectedPiece;
+    /** how long the hint stuff should (still) be visible */
+    private float mHintShowTimer;
+    /** the hint sprites */
+    private Vector<Sprite> mHintSprites;
 
-	/** team 0 */
-	private PlayerPiece[] mTeam0;
-	/** team 1 */
-	private PlayerPiece[] mTeam1;
+    /** currently selected piece */
+    private PlayerPiece mSelectedPiece;
 
-	/** pitch */
-	private PlayerPiece[] mPitch;
+    /** team 0 */
+    private PlayerPiece[] mTeam0;
+    /** team 1 */
+    private PlayerPiece[] mTeam1;
 
-	/** to create sprites on the fly */
-	private VertexBufferObjectManager mVbo;
-	/** the graphical map thingy */
-	private Entity mGfxMap;
+    /** pitch */
+    private PlayerPiece[] mPitch;
 
-	/** load resources */
-	public void loadResources(BBBActivity activity) {
-		mVbo = activity.getVertexBufferObjectManager();
-		mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(),
-				4 * 196 + 2 * 128, 256);
+    /** to create sprites on the fly */
+    private VertexBufferObjectManager mVbo;
+    /** the graphical map thingy */
+    private Entity mGfxMap;
 
-		mChaosBeastmanTexture = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mTextureAtlas, activity,
-						"gfx/team_chaos/beastman00.png", 196 * 0, 0);
-		mChaosWarriorTexture = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mTextureAtlas, activity,
-						"gfx/team_chaos/chaoswarrior00.png", 196 * 1, 0);
-		mVampireThrallTexture = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mTextureAtlas, activity,
-						"gfx/team_vampire/thrall00.png", 196 * 2, 0);
-		mVampireVampireTexture = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mTextureAtlas, activity,
-						"gfx/team_vampire/vampire00.png", 196 * 3, 0);
+    /** load resources */
+    public void loadResources(BBBActivity activity) {
+        mVbo = activity.getVertexBufferObjectManager();
+        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 4 * 196 + 3 * 128, 256);
 
-		mSelectorTexture0 = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mTextureAtlas, activity, "gfx/selector00.png",
-						196 * 4 + 0 * 128, 0);
-		mSelectorTexture1 = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mTextureAtlas, activity, "gfx/selector01.png",
-						196 * 4 + 1 * 128, 0);
+        mChaosBeastmanTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/team_chaos/beastman00.png", 196 * 0, 0);
+        mChaosWarriorTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/team_chaos/chaoswarrior00.png", 196 * 1, 0);
+        mVampireThrallTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/team_vampire/thrall00.png", 196 * 2, 0);
+        mVampireVampireTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/team_vampire/vampire00.png", 196 * 3, 0);
 
-		mTextureAtlas.load();
+        mSelectorTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/selector00.png", 196 * 4 + 0 * 128, 0);
+        mSelectorTexture1 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/selector01.png", 196 * 4 + 1 * 128, 0);
 
-		mSelector = new Sprite(0, 0, mSelectorTexture0, mVbo);
-	}
+        mHintTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/selector03.png", 196 * 4 + 2 * 128, 0);
 
-	public void createTeams(BBBActivity activity) {
-		mTeam0 = new PlayerPiece[11];
-		mTeam1 = new PlayerPiece[11];
-		mPitch = new PlayerPiece[PITCH_HEIGHT * PITCH_WIDTH];
-		for (int i = 0; i < 3; ++i) {
-			mTeam0[i] = new PlayerPiece(4, 4, 6, 8);
-			Sprite sprite = new Sprite(0, 0, mVampireVampireTexture, mVbo);
-			mTeam0[i].setEntity(sprite);
-		}
-		for (int i = 3; i < 11; ++i) {
-			mTeam0[i] = new PlayerPiece(3, 3, 6, 7);
-			Sprite sprite = new Sprite(0, 0, mVampireThrallTexture, mVbo);
-			mTeam0[i].setEntity(sprite);
-		}
-		for (int i = 0; i < 3; ++i) {
-			mTeam1[i] = new PlayerPiece(4, 3, 5, 9);
-			Sprite sprite = new Sprite(0, 0, mChaosWarriorTexture, mVbo);
-			mTeam1[i].setEntity(sprite);
-		}
-		for (int i = 3; i < 11; ++i) {
-			mTeam1[i] = new PlayerPiece(3, 3, 6, 8);
-			Sprite sprite = new Sprite(0, 0, mChaosBeastmanTexture, mVbo);
-			mTeam1[i].setEntity(sprite);
-		}
-	}
+        mTextureAtlas.load();
 
-	public void placeTeams(Entity map) {
-		mGfxMap = map;
-		int places0[] = { 11, 3, 11, 4, 11, 5, 10, 7, 10, 1, 5, 4 };
-		int places1[] = { 12, 3, 12, 4, 12, 5, 13, 7, 13, 1, 20, 4 };
-		for (int i = 0; i < places0.length / 2; ++i) {
-			int x = places0[i * 2];
-			int y = places0[i * 2 + 1];
-			mTeam0[i].setPosition(x, y);
-			mTeam0[i].getEntity().setPosition(x * 128 - 32, y * 128 - 128);
-			map.attachChild(mTeam0[i].getEntity());
+        mSelector = new Sprite(0, 0, mSelectorTexture0, mVbo);
 
-			mPitch[x + y * PITCH_WIDTH] = mTeam0[i];
-		}
+        mHintSprites = new Vector<Sprite>(8);
+        for (int i = 0; i < 8; ++i) {
+            Sprite sprite = new Sprite(0, 0, mHintTexture0, mVbo);
+            mHintSprites.add(sprite);
+        }
+    }
 
-		for (int i = 0; i < places1.length / 2; ++i) {
-			int x = places1[i * 2];
-			int y = places1[i * 2 + 1];
-			mTeam1[i].setPosition(x, y);
-			mTeam1[i].getEntity().setPosition(x * 128 + PIECE_OFFSET_X,
-					y * 128 + PIECE_OFFSET_Y);
-			map.attachChild(mTeam1[i].getEntity());
+    public void createTeams(BBBActivity activity) {
+        mTeam0 = new PlayerPiece[11];
+        mTeam1 = new PlayerPiece[11];
+        mPitch = new PlayerPiece[PITCH_HEIGHT * PITCH_WIDTH];
+        for (int i = 0; i < 3; ++i) {
+            mTeam0[i] = new PlayerPiece(4, 4, 6, 8);
+            mTeam0[i].setTeam(0);
+            mTeam0[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite sprite = new Sprite(0, 0, mVampireVampireTexture, mVbo);
+            mTeam0[i].setEntity(sprite);
+        }
+        for (int i = 3; i < 11; ++i) {
+            mTeam0[i] = new PlayerPiece(3, 3, 6, 7);
+            mTeam0[i].setTeam(0);
+            mTeam0[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite sprite = new Sprite(0, 0, mVampireThrallTexture, mVbo);
+            mTeam0[i].setEntity(sprite);
+        }
+        for (int i = 0; i < 3; ++i) {
+            mTeam1[i] = new PlayerPiece(4, 3, 5, 9);
+            mTeam1[i].setTeam(1);
+            mTeam1[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite sprite = new Sprite(0, 0, mChaosWarriorTexture, mVbo);
+            mTeam1[i].setEntity(sprite);
+        }
+        for (int i = 3; i < 11; ++i) {
+            mTeam1[i] = new PlayerPiece(3, 3, 6, 8);
+            mTeam1[i].setTeam(1);
+            mTeam1[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite sprite = new Sprite(0, 0, mChaosBeastmanTexture, mVbo);
+            mTeam1[i].setEntity(sprite);
+        }
+    }
 
-			mPitch[x + y * PITCH_WIDTH] = mTeam1[i];
-		}
-	}
+    public void placeTeams(Entity map) {
+        mGfxMap = map;
+        int places0[] = { 11, 3, 11, 4, 11, 5, 10, 7, 10, 1, 5, 4 };
+        int places1[] = { 12, 3, 12, 4, 12, 5, 13, 7, 13, 1, 20, 4 };
+        for (int i = 0; i < places0.length / 2; ++i) {
+            int x = places0[i * 2];
+            int y = places0[i * 2 + 1];
+            mTeam0[i].setPosition(x, y);
+            mTeam0[i].getEntity().setPosition(x * 128 - 32, y * 128 - 128);
+            map.attachChild(mTeam0[i].getEntity());
 
-	public void dispose() {
-		mVbo = null;
-		mGfxMap = null;
+            mPitch[x + y * PITCH_WIDTH] = mTeam0[i];
+        }
 
-		mChaosBeastmanTexture = null;
-		mChaosWarriorTexture = null;
-		mVampireThrallTexture = null;
-		mVampireVampireTexture = null;
+        for (int i = 0; i < places1.length / 2; ++i) {
+            int x = places1[i * 2];
+            int y = places1[i * 2 + 1];
+            mTeam1[i].setPosition(x, y);
+            mTeam1[i].getEntity().setPosition(x * 128 + PIECE_OFFSET_X, y * 128 + PIECE_OFFSET_Y);
+            map.attachChild(mTeam1[i].getEntity());
 
-		mSelectorTexture0 = null;
-		mSelectorTexture1 = null;
+            mPitch[x + y * PITCH_WIDTH] = mTeam1[i];
+        }
+    }
 
-		mTextureAtlas.unload();
-	}
+    public void dispose() {
+        mVbo = null;
+        mGfxMap = null;
 
-	/** informs the pitch that the user chose to tap the given tile */
-	public void clickedTile(int tileX, int tileY) {
-		if (0 > tileX || tileX >= PITCH_WIDTH || 0 > tileY
-				|| tileY >= PITCH_HEIGHT) {
-			return;
-		}
+        mChaosBeastmanTexture = null;
+        mChaosWarriorTexture = null;
+        mVampireThrallTexture = null;
+        mVampireVampireTexture = null;
 
-		if (!mSelector.hasParent()) {
-			mGfxMap.attachChild(mSelector);
-		}
+        mSelectorTexture0 = null;
+        mSelectorTexture1 = null;
 
-		int index = tileX + tileY * PITCH_WIDTH;
-		if (mPitch[index] != null) {
-			for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
-				mSelectedPath.get(i).sprite.detachSelf();
-			}
-			mSelectedPath.clear();
+        mTextureAtlas.unload();
+    }
 
-			mSelectedPiece = mPitch[index];
-			mSelector.setPosition(tileX * GameScene.TILE_PIXELS, tileY
-					* GameScene.TILE_PIXELS);
-		}
+    /** informs the pitch that the user chose to tap the given tile */
+    public void clickedTile(int tileX, int tileY) {
+        if (0 > tileX || tileX >= PITCH_WIDTH || 0 > tileY || tileY >= PITCH_HEIGHT) {
+            return;
+        }
 
-		if (mSelectedPiece == null) {
-			mSelector.setPosition(tileX * GameScene.TILE_PIXELS, tileY
-					* GameScene.TILE_PIXELS);
-		} else {
-			int lastPosX = mSelectedPiece.getPositionX();
-			int lastPosY = mSelectedPiece.getPositionY();
+        if (!mSelector.hasParent()) {
+            mGfxMap.attachChild(mSelector);
+        }
 
-			boolean fail = false;
-			boolean showHint = false;
-			if (tileX == lastPosX && tileY == lastPosY) {
-				fail = true;
-				showHint = true;
-			}
-			for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
-				Step step = mSelectedPath.get(i);
-				lastPosX = step.tileX;
-				lastPosY = step.tileY;
-				if (step.tileX == tileX && step.tileY == tileY) {
-					fail = true;
-					break;
-				}
-			}
+        int index = tileX + tileY * PITCH_WIDTH;
+        if (mPitch[index] != null) {
+            cancelPlannedMove();
 
-			if (Math.abs(lastPosX - tileX) > 1
-					|| Math.abs(lastPosY - tileY) > 1) {
-				fail = true;
-				showHint = true;
-			}
+            mSelectedPiece = mPitch[index];
+            mSelector.setPosition(tileX * GameScene.TILE_PIXELS, tileY * GameScene.TILE_PIXELS);
+            mSelector.setVisible(true);
+        }
 
-			if (mSelectedPath.size() >= mSelectedPiece.getMV()) {
-				fail = true;
-			}
+        if (mSelectedPiece == null) {
+            mSelector.setPosition(tileX * GameScene.TILE_PIXELS, tileY * GameScene.TILE_PIXELS);
+            mSelector.setVisible(true);
+        } else {
+            int lastPosX = mSelectedPiece.getPositionX();
+            int lastPosY = mSelectedPiece.getPositionY();
 
-			if (!fail) {
-				Sprite sprite = new Sprite(tileX * GameScene.TILE_PIXELS, tileY
-						* GameScene.TILE_PIXELS, mSelectorTexture1, mVbo);
-				mGfxMap.attachChild(sprite);
-				Step step = new Step();
-				step.tileX = tileX;
-				step.tileY = tileY;
-				step.type = Step.TYPE_MOVE;
-				step.sprite = sprite;
-				mSelectedPath.add(step);
-			}
+            boolean fail = false;
+            boolean showHint = false;
+            if (tileX == lastPosX && tileY == lastPosY) {
+                fail = true;
+                showHint = true;
+            }
+            for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
+                Step step = mSelectedPath.get(i);
+                lastPosX = step.tileX;
+                lastPosY = step.tileY;
+                if (step.tileX == tileX && step.tileY == tileY) {
+                    fail = true;
+                    break;
+                }
+            }
 
-			if (showHint) {
-				// TODO
-			}
-		}
+            if (Math.abs(lastPosX - tileX) > 1 || Math.abs(lastPosY - tileY) > 1) {
+                fail = true;
+                showHint = true;
+            }
 
-	}
+            if (mSelectedPath.size() >= 2 + mSelectedPiece.getMV()) {
+                fail = true;
+                showHint = false;
+            }
 
-	/** how many steps the currently planned move has */
-	public int getCurrentSteps() {
-		return mSelectedPath.size();
-	}
+            if (!fail) {
+                Sprite sprite = new Sprite(tileX * GameScene.TILE_PIXELS, tileY * GameScene.TILE_PIXELS,
+                        mSelectorTexture1, mVbo);
+                mGfxMap.attachChild(sprite);
+                Step step = makeNextStep(tileX, tileY, lastPosX, lastPosY);
+                step.sprite = sprite;
+                mSelectedPath.add(step);
+            }
 
-	/** how many steps the currently selected player may make */
-	public int getCurrentMovementLimit() {
-		if (mSelectedPiece == null)
-			return -1;
-		return mSelectedPiece.getMV();
-	}
+            if (showHint) {
+                triggerShowHint(lastPosX, lastPosY);
+            } else {
+                hideHints();
+            }
+        }
+    }
 
-	/** tickwise update */
-	public void update(float dt) {
-	}
+    /** get tackle zones targeting given tile - against given team */
+    private int getTackleZones(int tileX, int tileY, int team) {
+        int count = 0;
+        for (int x = tileX - 1; x <= tileX + 1; ++x) {
+            if (0 > x || x >= PITCH_WIDTH) continue;
+            for (int y = tileY - 1; y <= tileY + 1; ++y) {
+                if (0 > y || y >= PITCH_HEIGHT) continue;
+                int index = x + y * PITCH_WIDTH;
+                if (mPitch[index] != null && mPitch[index].getTeam() != team) {
+                    if (mPitch[index].getTackleZone()) {
+                        ++count;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    /** adds a step leading to given tile, from last position */
+    public Step makeNextStep(int tileX, int tileY, int lastPosX, int lastPosY) {
+        Step step = new Step();
+        step.tileX = tileX;
+        step.tileY = tileY;
+        step.type = Step.TYPE_MOVE;
+        step.successChance = 1;
+
+        if (getTackleZones(lastPosX, lastPosY, mSelectedPiece.getTeam()) > 0) {
+            int tacklemod = getTackleZones(tileX, tileY, mSelectedPiece.getTeam());
+            step.dice = true;
+            step.minRoll = 7 - mSelectedPiece.getAG() - 1 + tacklemod;
+
+            int diceChance = Math.max(2, Math.min(step.minRoll, 6));
+            step.successChance = 1 - (diceChance - 1) / 6.0f;
+        }
+
+        if (mSelectedPath.size() >= mSelectedPiece.getMV()) {
+            step.successChance *= 5.0f / 6.0f;
+        }
+
+        return step;
+    }
+
+    /** how many steps the currently planned move has */
+    public int getCurrentSteps() {
+        return mSelectedPath.size();
+    }
+
+    /** how many steps the currently selected player may make */
+    public int getCurrentMovementLimit() {
+        if (mSelectedPiece == null) return -1;
+        return mSelectedPiece.getMV();
+    }
+
+    /** chance to succeed the current move */
+    public float getCurrentMoveSuccessChance() {
+        if (mSelectedPiece == null) return 1;
+        if (mSelectedPath.size() == 0) return 1;
+
+        float successchance = 1;
+        for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
+            Step step = mSelectedPath.get(i);
+            successchance *= step.successChance;
+        }
+
+        return successchance;
+    }
+
+    /** shows a movement hint */
+    private void triggerShowHint(int tileX, int tileY) {
+        if (mHintShowTimer > 0) return;
+
+        mHintShowTimer = HINT_SHOW_DURATION;
+
+        int hintIndex = 0;
+        for (int x = tileX - 1; x <= tileX + 1; ++x) {
+            if (0 > x || x >= PITCH_WIDTH) continue;
+            for (int y = tileY - 1; y <= tileY + 1; ++y) {
+                if (0 > y || y >= PITCH_HEIGHT) continue;
+                if (x == tileX && y == tileY) continue;
+
+                int index = x + y * PITCH_WIDTH;
+                boolean possible = true;
+                if (mPitch[index] != null) {
+                    possible = false;
+                }
+                for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
+                    Step step = mSelectedPath.get(i);
+                    if (step.tileX == x && step.tileY == y) {
+                        possible = false;
+                        break;
+                    }
+                }
+
+                if (possible) {
+                    Sprite sprite = mHintSprites.get(hintIndex);
+                    ++hintIndex;
+                    if (!sprite.hasParent()) mGfxMap.attachChild(sprite);
+                    sprite.setAlpha(0);
+                    sprite.setVisible(true);
+                    sprite.setPosition(x * GameScene.TILE_PIXELS, y * GameScene.TILE_PIXELS);
+                }
+            }
+        }
+
+        // for(int n = mHintSprites.size(); hintIndex < n; ++hintIndex) {
+        // Sprite sprite = mHintSprites.get(hintIndex);
+        // sprite.setVisible(false);
+        // }
+    }
+
+    /** hide movement hints */
+    private void hideHints() {
+        mHintShowTimer = 0;
+        for (int hintIndex = 0, n = mHintSprites.size(); hintIndex < n; ++hintIndex) {
+            Sprite sprite = mHintSprites.get(hintIndex);
+            sprite.setVisible(false);
+        }
+    }
+
+    /** tickwise update */
+    public void update(float dt) {
+        if (mHintShowTimer > 0) {
+            mHintShowTimer -= dt;
+
+            float alpha = 1;
+            if (mHintShowTimer > HINT_SHOW_DURATION - .25f) {
+                alpha = (HINT_SHOW_DURATION - mHintShowTimer) * 4;
+            }
+            if (mHintShowTimer < .25f) {
+                alpha = mHintShowTimer * 4;
+            }
+            for (int hintIndex = 0, n = mHintSprites.size(); hintIndex < n; ++hintIndex) {
+                Sprite sprite = mHintSprites.get(hintIndex);
+                if (sprite.isVisible()) {
+                    sprite.setAlpha(alpha);
+                }
+            }
+            if (mHintShowTimer <= 0) {
+                hideHints();
+            }
+        }
+    }
+
+    /** actually attempt the planned move */
+    public void executePlannedMove() {
+        // TODO Auto-generated method stub
+
+    }
+
+    /** cancel previously planned move */
+    public void cancelPlannedMove() {
+        for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
+            mSelectedPath.get(i).sprite.detachSelf();
+        }
+        mSelectedPath.clear();
+        mSelectedPiece = null;
+        mSelector.setVisible(false);
+    }
 }
