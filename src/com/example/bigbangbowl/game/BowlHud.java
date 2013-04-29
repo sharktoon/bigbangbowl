@@ -218,7 +218,6 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         mLogDisplay = new Vector<BowlHud.UpdatedEntityContainer>(10);
 
         hideConfirmationSigns();
-
     }
 
     @Override
@@ -229,6 +228,10 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         mTextureAtlas.unload();
 
         super.dispose();
+    }
+    
+    public BitmapFont getFont() {
+        return mBitmapFont;
     }
 
     /** set a callback for the end turn */

@@ -9,6 +9,8 @@ import org.andengine.entity.modifier.IEntityModifier;
 import org.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.andengine.entity.modifier.MoveModifier;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
+import org.andengine.opengl.font.BitmapFont;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
@@ -142,6 +144,7 @@ public class ThePitch {
     }
 
     public void createTeams(BBBActivity activity) {
+        BitmapFont font = mHud.getFont();
         mTeam0 = new PlayerPiece[11];
         mTeam1 = new PlayerPiece[11];
         mPitch = new PlayerPiece[PITCH_HEIGHT * PITCH_WIDTH];
@@ -150,28 +153,36 @@ public class ThePitch {
             mTeam0[i].setTeam(0);
             mTeam0[i].setState(PlayerPiece.STATE_STANDING);
             Sprite sprite = new Sprite(0, 0, mVampireVampireTexture, mVbo);
-            mTeam0[i].setEntity(sprite);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            sprite.attachChild(status);
+            mTeam0[i].setEntity(sprite, status);
         }
         for (int i = 3; i < 11; ++i) {
             mTeam0[i] = new PlayerPiece(3, 3, 6, 7);
             mTeam0[i].setTeam(0);
             mTeam0[i].setState(PlayerPiece.STATE_STANDING);
             Sprite sprite = new Sprite(0, 0, mVampireThrallTexture, mVbo);
-            mTeam0[i].setEntity(sprite);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            sprite.attachChild(status);
+            mTeam0[i].setEntity(sprite, status);
         }
         for (int i = 0; i < 3; ++i) {
             mTeam1[i] = new PlayerPiece(4, 3, 5, 9);
             mTeam1[i].setTeam(1);
             mTeam1[i].setState(PlayerPiece.STATE_STANDING);
             Sprite sprite = new Sprite(0, 0, mChaosWarriorTexture, mVbo);
-            mTeam1[i].setEntity(sprite);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            sprite.attachChild(status);
+            mTeam1[i].setEntity(sprite, status);
         }
         for (int i = 3; i < 11; ++i) {
             mTeam1[i] = new PlayerPiece(3, 3, 6, 8);
             mTeam1[i].setTeam(1);
             mTeam1[i].setState(PlayerPiece.STATE_STANDING);
             Sprite sprite = new Sprite(0, 0, mChaosBeastmanTexture, mVbo);
-            mTeam1[i].setEntity(sprite);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            sprite.attachChild(status);
+            mTeam1[i].setEntity(sprite, status);
         }
     }
 
@@ -757,11 +768,14 @@ public class ThePitch {
         switch (chosenDie) {
         case 1:
             // attacker down
+            mSelectedPiece.setState(PlayerPiece.STATE_DOWN);
             rollHurtDice(mSelectedPiece);
             failed = true;
             break;
         case 2:
             // both down
+            mSelectedPiece.setState(PlayerPiece.STATE_DOWN);
+            target.setState(PlayerPiece.STATE_DOWN);
             rollHurtDice(mSelectedPiece);
             rollHurtDice(target);
             failed = true;
@@ -772,10 +786,12 @@ public class ThePitch {
             break;
         case 5:
             // defender stumbles
+            target.setState(PlayerPiece.STATE_DOWN);
             rollHurtDice(target);
             break;
         case 6:
             // defender down
+            target.setState(PlayerPiece.STATE_DOWN);
             rollHurtDice(target);
             break;
         }
@@ -801,6 +817,7 @@ public class ThePitch {
             mLogger.showDiceLogLine(IDiceLogReceiver.LOG_NEUTRAL, "---");
         }
         mCurrentActor = mSelectedPiece;
+        mCurrentActor.beginTurn();
     }
 
     /** cancel previously planned move */

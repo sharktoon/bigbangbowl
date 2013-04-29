@@ -1,6 +1,7 @@
 package com.example.bigbangbowl.game;
 
 import org.andengine.entity.Entity;
+import org.andengine.entity.text.Text;
 
 /**
  * representation of a player piece - like a human blitzer
@@ -48,6 +49,8 @@ public class PlayerPiece {
 
     /** the graphical representation of this player */
     private Entity mEntity;
+    /** the status display letter */
+    private Text mStatusDisplay;
 
     public PlayerPiece(int ST, int AG, int MV, int AV) {
         this.mAgility = AG;
@@ -97,6 +100,25 @@ public class PlayerPiece {
     /** set the state of this player - when something happened to them */
     public void setState(int state) {
         this.mState = state;
+        
+        if(mStatusDisplay != null) {
+            char letter = ' ';
+            switch(mState) {
+            case STATE_DOWN:
+                letter = 'D';
+                break;
+            case STATE_STUNNED:
+                letter = 'S';
+                break;
+            case STATE_HAS_BALL:
+                letter = 'B';
+                break;
+            }
+            
+            StringBuffer buf = new StringBuffer();
+            buf.append(letter);
+            mStatusDisplay.setText(buf);
+        }
     }
 
     /** retrieve current state of the player - like on the pitch or stuff */
@@ -110,8 +132,9 @@ public class PlayerPiece {
     }
 
     /** set the graphical representation of this piece */
-    public void setEntity(Entity entity) {
+    public void setEntity(Entity entity, Text letter) {
         mEntity = entity;
+        mStatusDisplay = letter;
     }
 
     /** set to which team this piece belongs */
@@ -142,7 +165,7 @@ public class PlayerPiece {
         mRemainingMove = mMovementValue;
         mTurnDone = false;
         if (mState == STATE_STUNNED) {
-            mState = STATE_DOWN;
+            setState(STATE_DOWN);
             mTurnDone = true;
         }
         if (mState == STATE_DOWN) {
@@ -157,10 +180,13 @@ public class PlayerPiece {
 
     /** uses up movement */
     public void useMovement(int amount) {
-        if (mState == STATE_DOWN) mState = STATE_STANDING;
         mRemainingMove -= amount;
     }
-
+    
+    public void beginTurn() {
+        if (mState == STATE_DOWN) setState(STATE_STANDING);
+    }
+    
     /** ends this players turn */
     public void endTurn() {
         mTurnDone = true;
