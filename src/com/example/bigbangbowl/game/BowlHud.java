@@ -8,21 +8,12 @@ import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.opengl.font.BitmapFont;
-import org.andengine.opengl.font.Font;
-import org.andengine.opengl.font.StrokeFont;
-import org.andengine.opengl.texture.ITexture;
-import org.andengine.opengl.texture.TextureOptions;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.TextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
-import android.graphics.Typeface;
-
 import com.example.bigbangbowl.BBBActivity;
+import com.example.bigbangbowl.GameResources;
 import com.example.bigbangbowl.TouchSprite;
 import com.example.bigbangbowl.TouchSprite.ITouchSpriteCallback;
 import com.example.bigbangbowl.game.dice.IDiceLogReceiver;
@@ -116,16 +107,6 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
     }
 
-    /** the bitmapfont for the texts */
-    private BitmapFont mBitmapFont;
-    private VertexBufferObjectManager mVbo;
-    private BitmapTextureAtlas mTextureAtlas;
-    private TextureRegion mSignAcceptTexture;
-    private TextureRegion mSignDeclineTexture;
-    private TextureRegion mButtonEndturnTexture;
-    private TextureRegion mButtonConfirmTexture;
-    private TextureRegion mWarningTurnoverTexture;
-
     private TouchSprite mSignAccept;
     private TouchSprite mSignDecline;
     private TouchSprite mButtonEndturn;
@@ -136,7 +117,6 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     private IConfirmationCallback mConfirmationCallback;
     /** stored callback - for end turn */
     private IEndturnCallback mEndturnCallback;
-    private Font mFont;
     /** visible dice log stuff */
     private Vector<UpdatedEntityContainer> mLogDisplay;
     /** current displayed team name */
@@ -145,42 +125,13 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     private float mTurnoverTimer;
 
     public void prepareResources(BBBActivity activity) {
-        this.mBitmapFont = new BitmapFont(activity.getTextureManager(), activity.getAssets(), "font/BitmapFont.fnt");
-        this.mBitmapFont.load();
-
-        final ITexture strokeFontTexture = new BitmapTextureAtlas(activity.getTextureManager(), 256, 256,
-                TextureOptions.BILINEAR);
-        this.mFont = new StrokeFont(activity.getFontManager(), strokeFontTexture, Typeface.create(
-                Typeface.DEFAULT_BOLD, Typeface.BOLD), 32, true, Color.WHITE, 2, Color.BLACK);
-        // this.mFont = FontFactory.create(activity.getFontManager(),
-        // activity.getTextureManager(), 256, 256,
-        // TextureOptions.BILINEAR, Typeface.create(Typeface.SANS_SERIF,
-        // Typeface.BOLD), 32, 0xffffffff);
-        this.mFont.load();
-
-        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 2 * 256, 5 * 128);
-
-        mSignAcceptTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/sign_accept.png", 256 * 0, 0);
-        mSignDeclineTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/sign_decline.png", 256 * 1, 0);
-
-        mButtonEndturnTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/buttons/endturn.png", 0, 256);
-        mButtonConfirmTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/buttons/confirm.png", 0, 256 + 128);
-        mWarningTurnoverTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/buttons/turnover.png", 0, 256 + 2 * 128);
-
-        mTextureAtlas.load();
-
-        mVbo = activity.getVertexBufferObjectManager();
-
         float scale = .4f;
         float posy = BBBActivity.CAMERA_HEIGHT - 128 - 128 * scale;
         float posx = activity.getCurrentWidth() - 128 - 128 * scale;
-        mSignAccept = new TouchSprite(posx, posy, mSignAcceptTexture, mVbo);
-        mSignDecline = new TouchSprite(-128 + 128 * scale, posy, mSignDeclineTexture, mVbo);
+        GameResources res = GameResources.getInstance();
+        mSignAccept = new TouchSprite(posx, posy, res.getTextureRegion(GameResources.FRAME_SIGN_ACCEPT), res.getVbo());
+        mSignDecline = new TouchSprite(-128 + 128 * scale, posy,
+                res.getTextureRegion(GameResources.FRAME_SIGN_DECLINE), res.getVbo());
         mSignAccept.setScale(scale);
         mSignDecline.setScale(scale);
         mSignAccept.setTouchCallback(this);
@@ -189,12 +140,14 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         this.attachChild(mSignAccept);
         this.attachChild(mSignDecline);
 
+        TextureRegion endturnframe = res.getTextureRegion(GameResources.FRAME_BUTTON_ENDTURN);
         scale = .6f;
-        posx = .5f * (activity.getCurrentWidth() - mButtonConfirmTexture.getWidth());
-        posy = (-.5f + .5f * scale) * mButtonEndturnTexture.getHeight();
-        mButtonEndturn = new TouchSprite(posx, posy, mButtonEndturnTexture, mVbo);
-        posy = .5f * (BBBActivity.CAMERA_HEIGHT - mButtonConfirmTexture.getHeight());
-        mButtonConfirm = new TouchSprite(posx, posy, mButtonConfirmTexture, mVbo);
+        posx = .5f * (activity.getCurrentWidth() - endturnframe.getWidth());
+        posy = (-.5f + .5f * scale) * endturnframe.getHeight();
+        mButtonEndturn = new TouchSprite(posx, posy, endturnframe, res.getVbo());
+        posy = .5f * (BBBActivity.CAMERA_HEIGHT - endturnframe.getHeight());
+        mButtonConfirm = new TouchSprite(posx, posy, res.getTextureRegion(GameResources.FRAME_BUTTON_CONFIRM),
+                res.getVbo());
         mButtonEndturn.setScale(scale);
         mButtonConfirm.setScale(scale);
 
@@ -209,9 +162,10 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         this.registerTouchArea(mSignAccept);
         this.registerTouchArea(mSignDecline);
 
-        posx = .5f * (activity.getCurrentWidth() - mWarningTurnoverTexture.getWidth());
-        posy = .5f * (BBBActivity.CAMERA_HEIGHT - mWarningTurnoverTexture.getHeight());
-        mWarningTurnover = new Sprite(posx, posy, mWarningTurnoverTexture, mVbo);
+        TextureRegion warningframe = res.getTextureRegion(GameResources.FRAME_WARNING_TURNOVER);
+        posx = .5f * (activity.getCurrentWidth() - warningframe.getWidth());
+        posy = .5f * (BBBActivity.CAMERA_HEIGHT - warningframe.getHeight());
+        mWarningTurnover = new Sprite(posx, posy, warningframe, res.getVbo());
         mWarningTurnover.setVisible(false);
         this.attachChild(mWarningTurnover);
 
@@ -222,16 +176,7 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
     @Override
     public void dispose() {
-        mVbo = null;
-        mBitmapFont = null;
-
-        mTextureAtlas.unload();
-
         super.dispose();
-    }
-    
-    public BitmapFont getFont() {
-        return mBitmapFont;
     }
 
     /** set a callback for the end turn */
@@ -261,7 +206,9 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         // text.append(total);
 
         if (mMovementDisplay == null) {
-            mMovementDisplay = new Text(0, 0, this.mBitmapFont, text, new TextOptions(HorizontalAlign.LEFT), mVbo);
+            GameResources res = GameResources.getInstance();
+            mMovementDisplay = new Text(0, 0, res.getBitmapFont(), text, new TextOptions(HorizontalAlign.LEFT),
+                    res.getVbo());
             this.attachChild(mMovementDisplay);
         } else {
             mMovementDisplay.setText(text);
@@ -285,7 +232,9 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         text.append(Math.round(chance * 1000) / 10.0f);
         text.append("%");
         if (mChanceDisplay == null) {
-            mChanceDisplay = new Text(0, 30, this.mBitmapFont, text, new TextOptions(HorizontalAlign.LEFT), mVbo);
+            GameResources res = GameResources.getInstance();
+            mChanceDisplay = new Text(0, 30, res.getBitmapFont(), text, new TextOptions(HorizontalAlign.LEFT),
+                    res.getVbo());
             this.attachChild(mChanceDisplay);
         } else {
             mChanceDisplay.setText(text);
@@ -353,7 +302,8 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     /** display a log line */
     @Override
     public void showDiceLogLine(int logtype, CharSequence text) {
-        Text line = new Text(20, BBBActivity.CAMERA_HEIGHT - 50, mFont, text, mVbo);
+        GameResources res = GameResources.getInstance();
+        Text line = new Text(20, BBBActivity.CAMERA_HEIGHT - 50, res.getFont(), text, res.getVbo());
         switch (logtype) {
         case IDiceLogReceiver.LOG_FAILURE:
             line.setColor(Color.RED);
@@ -385,10 +335,10 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
                 --n;
             }
         }
-        
-        if(mTurnoverTimer > 0) {
+
+        if (mTurnoverTimer > 0) {
             mTurnoverTimer -= pSecondsElapsed;
-            if(mTurnoverTimer <= 0) {
+            if (mTurnoverTimer <= 0) {
                 mWarningTurnover.setVisible(false);
             }
         }
@@ -405,18 +355,18 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
         if (0 > team || team >= TEAM_NAMES.length) return;
 
-        mTeamName = new Text(0, 0, mFont, TEAM_NAMES[team], mVbo);
+        GameResources res = GameResources.getInstance();
+        mTeamName = new Text(0, 0, res.getFont(), TEAM_NAMES[team], res.getVbo());
         float width = mTeamName.getWidth();
         mTeamName.setX(getCamera().getWidth() - width);
         mTeamName.setColor(TEAM_COLORS[team]);
         this.attachChild(mTeamName);
     }
-    
+
     /** show the turnover warning sign for a short time */
     public void showWarningTurnover() {
         mTurnoverTimer = TURNOVER_WARNING_DURATION;
         mWarningTurnover.setVisible(true);
     }
-    
 
 }

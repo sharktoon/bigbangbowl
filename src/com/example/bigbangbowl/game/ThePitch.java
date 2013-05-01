@@ -11,14 +11,10 @@ import org.andengine.entity.modifier.MoveModifier;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.opengl.font.BitmapFont;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.texture.region.TextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.modifier.IModifier;
 
 import com.example.bigbangbowl.BBBActivity;
+import com.example.bigbangbowl.GameResources;
 import com.example.bigbangbowl.game.dice.IDiceLogReceiver;
 import com.example.bigbangbowl.game.dice.Step;
 
@@ -44,28 +40,6 @@ public class ThePitch {
     public static final int PIECE_OFFSET_Y = -128;
     /** duration of a step */
     private static final float STEP_DURATION = .5f;
-
-    /** complete texture atlas */
-    private BitmapTextureAtlas mTextureAtlas;
-    /** the combatants graphics */
-    private ITextureRegion mChaosBeastmanTexture;
-    private ITextureRegion mChaosWarriorTexture;
-    private ITextureRegion mVampireThrallTexture;
-    private ITextureRegion mVampireVampireTexture;
-    private ITextureRegion mSkeletonTexture;
-    
-    /** foot thingies for the pieces */
-    private ITextureRegion mFootBlueTexture;
-    private ITextureRegion mFootGreenTexture;
-    
-    /** selector images */
-    private TextureRegion mSelectorTexture0;
-    private TextureRegion mSelectorTexture1;
-    private TextureRegion mSelectorTexture2;
-    /** hint images */
-    private TextureRegion mHintTexture0;
-    /** blood stain */
-    private TextureRegion mBloodTexture0;
 
     /** the highlight thingy */
     private Sprite mSelector, mAttackSelector;
@@ -96,8 +70,6 @@ public class ThePitch {
     /** pitch */
     private PlayerPiece[] mPitch;
 
-    /** to create sprites on the fly */
-    private VertexBufferObjectManager mVbo;
     /** the graphical map thingy */
     private Entity mGfxMap, mGfxMapBg;
     /** the random number supplier... */
@@ -110,46 +82,16 @@ public class ThePitch {
 
     /** load resources */
     public void loadResources(BBBActivity activity, BowlHud hud) {
-        mVbo = activity.getVertexBufferObjectManager();
         mHud = hud;
-        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 7 * 196, 256 + 128);
 
-        mChaosBeastmanTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/team_chaos/beastman00.png", 196 * 0, 0);
-        mChaosWarriorTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/team_chaos/chaoswarrior00.png", 196 * 1, 0);
-        mVampireThrallTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/team_vampire/thrall00.png", 196 * 2, 0);
-        mVampireVampireTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/team_vampire/vampire00.png", 196 * 3, 0);
-        
-        mSkeletonTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/team_undead/skeleton00.png", 196 * 4, 0);
-        mFootBlueTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/foot_blue.png", 196 * 5, 0);
-        mFootGreenTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/foot_green.png", 196 * 6, 0);
+        GameResources res = GameResources.getInstance();
 
-        mSelectorTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector00.png", 0 * 128, 256);
-        mSelectorTexture1 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector01.png", 1 * 128, 256);
-        mSelectorTexture2 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector02.png", 2 * 128, 256);
-
-        mHintTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector03.png", 3 * 128, 256);
-        mBloodTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/blood.png", 5 * 128, 256);
-
-        mTextureAtlas.load();
-
-        mSelector = new Sprite(0, 0, mSelectorTexture0, mVbo);
-        mAttackSelector = new Sprite(0, 0, mSelectorTexture2, mVbo);
+        mSelector = res.createSprite(0, 0, GameResources.FRAME_SELECTOR0);
+        mAttackSelector = res.createSprite(0, 0, GameResources.FRAME_SELECTOR2);
 
         mHintSprites = new Vector<Sprite>(8);
         for (int i = 0; i < 8; ++i) {
-            Sprite sprite = new Sprite(0, 0, mHintTexture0, mVbo);
+            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_HINT);
             mHintSprites.add(sprite);
         }
 
@@ -157,7 +99,8 @@ public class ThePitch {
     }
 
     public void createTeams(BBBActivity activity) {
-        BitmapFont font = mHud.getFont();
+        GameResources res = GameResources.getInstance();
+        BitmapFont font = res.getBitmapFont();
         mTeam0 = new PlayerPiece[11];
         mTeam1 = new PlayerPiece[11];
         mPitch = new PlayerPiece[PITCH_HEIGHT * PITCH_WIDTH];
@@ -165,9 +108,9 @@ public class ThePitch {
             mTeam0[i] = new PlayerPiece(4, 4, 6, 8);
             mTeam0[i].setTeam(0);
             mTeam0[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = new Sprite(0, 0, mFootBlueTexture, mVbo);
-            Sprite sprite = new Sprite(0, 0, mVampireVampireTexture, mVbo);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_BLUE);
+            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_VAMPIRE_VAMPIRE);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
             foot.attachChild(status);
             foot.attachChild(sprite);
             mTeam0[i].setEntity(foot, status);
@@ -176,9 +119,9 @@ public class ThePitch {
             mTeam0[i] = new PlayerPiece(3, 3, 6, 7);
             mTeam0[i].setTeam(0);
             mTeam0[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = new Sprite(0, 0, mFootBlueTexture, mVbo);
-            Sprite sprite = new Sprite(0, 0, mVampireThrallTexture, mVbo);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_BLUE);
+            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_VAMPIRE_THRALL);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
             foot.attachChild(status);
             foot.attachChild(sprite);
             mTeam0[i].setEntity(foot, status);
@@ -187,9 +130,9 @@ public class ThePitch {
             mTeam1[i] = new PlayerPiece(4, 3, 5, 9);
             mTeam1[i].setTeam(1);
             mTeam1[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = new Sprite(0, 0, mFootGreenTexture, mVbo);
-            Sprite sprite = new Sprite(0, 0, mChaosWarriorTexture, mVbo);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_GREEN);
+            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_CHAOS_WARRIOR);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
             foot.attachChild(status);
             foot.attachChild(sprite);
             mTeam1[i].setEntity(foot, status);
@@ -198,9 +141,9 @@ public class ThePitch {
             mTeam1[i] = new PlayerPiece(3, 3, 6, 8);
             mTeam1[i].setTeam(1);
             mTeam1[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = new Sprite(0, 0, mFootGreenTexture, mVbo);
-            Sprite sprite = new Sprite(0, 0, mChaosBeastmanTexture, mVbo);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
+            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_GREEN);
+            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_CHAOS_BEASTMAN);
+            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
             foot.attachChild(status);
             foot.attachChild(sprite);
             mTeam1[i].setEntity(foot, status);
@@ -239,19 +182,8 @@ public class ThePitch {
     }
 
     public void dispose() {
-        mVbo = null;
         mGfxMap = null;
         mHud = null;
-
-        mChaosBeastmanTexture = null;
-        mChaosWarriorTexture = null;
-        mVampireThrallTexture = null;
-        mVampireVampireTexture = null;
-
-        mSelectorTexture0 = null;
-        mSelectorTexture1 = null;
-
-        mTextureAtlas.unload();
     }
 
     public void switchTeams() {
@@ -347,8 +279,8 @@ public class ThePitch {
             }
 
             if (!fail) {
-                Sprite sprite = new Sprite(tileX * GameScene.TILE_PIXELS, tileY * GameScene.TILE_PIXELS,
-                        mSelectorTexture1, mVbo);
+                Sprite sprite = GameResources.getInstance().createSprite(tileX * GameScene.TILE_PIXELS,
+                        tileY * GameScene.TILE_PIXELS, GameResources.FRAME_SELECTOR1);
                 mGfxMap.attachChild(sprite);
                 Step step = makeNextStep(tileX, tileY, lastPosX, lastPosY);
                 step.sprite = sprite;
@@ -441,7 +373,7 @@ public class ThePitch {
         int defSt = target.getST();
         int attSt = source.getST();
 
-        for (int i = 0, n = candidates.size(); i < n; ++i) {
+        for (int i = candidates.size() - 1; i >= 0; --i) {
             PlayerPiece piece = candidates.get(i);
             int baseX = piece.getPositionX();
             int baseY = piece.getPositionY();
@@ -452,14 +384,15 @@ public class ThePitch {
                     for (int y = baseY - 1; y <= baseY + 1; ++y) {
                         if (0 > y || y >= PITCH_HEIGHT) continue;
                         int index = x + y * PITCH_WIDTH;
-                        if (mPitch[index] != null && mPitch[index] != source && mPitch[index] != target
-                                && mPitch[index].getTeam() != piece.getTeam()) {
-                            candidates.remove(i);
-                            --i;
-                            --n;
-                            removed = true;
-                            break;
-                        }
+                        if (mPitch[index] == null) continue;
+                        if (mPitch[index] == source) continue;
+                        if (mPitch[index] == target) continue;
+                        if (mPitch[index].getTeam() == piece.getTeam()) continue;
+                        if (!mPitch[index].getTackleZone()) continue;
+
+                        candidates.remove(i);
+                        removed = true;
+                        break;
                     }
                     if (removed) break;
                 }
@@ -916,8 +849,8 @@ public class ThePitch {
         int index = piece.getPositionX() + piece.getPositionY() * PITCH_WIDTH;
         mPitch[index] = null;
 
-        Sprite blood = new Sprite(piece.getPositionX() * GameScene.TILE_PIXELS, piece.getPositionY()
-                * GameScene.TILE_PIXELS, mBloodTexture0, mVbo);
+        Sprite blood = GameResources.getInstance().createSprite(piece.getPositionX() * GameScene.TILE_PIXELS,
+                piece.getPositionY() * GameScene.TILE_PIXELS, GameResources.FRAME_BLOOD);
         mGfxMapBg.attachChild(blood);
     }
 }

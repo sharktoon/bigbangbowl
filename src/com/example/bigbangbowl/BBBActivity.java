@@ -8,6 +8,8 @@ import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.BaseGameActivity;
 
+import android.os.Bundle;
+
 import com.example.bigbangbowl.game.GameScene;
 import com.example.bigbangbowl.scenes.SplashScene;
 
@@ -66,11 +68,24 @@ public class BBBActivity extends BaseGameActivity {
     }
 
     void startGameScene() {
+        GameResources.getInstance().init(this);
+        
         Scene scene = new GameScene(this, mCamera);
         Scene oldScene = mCurrentScene;
         mEngine.setScene(scene);
         mCurrentScene = scene;
         oldScene.dispose();
+    }
+
+    @Override
+    protected void onCreate(Bundle pSavedInstanceState) {
+        super.onCreate(pSavedInstanceState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        GameResources.purge();
+        super.onDestroy();
     }
 
 }
