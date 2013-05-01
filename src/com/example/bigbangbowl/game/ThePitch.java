@@ -52,6 +52,12 @@ public class ThePitch {
     private ITextureRegion mChaosWarriorTexture;
     private ITextureRegion mVampireThrallTexture;
     private ITextureRegion mVampireVampireTexture;
+    private ITextureRegion mSkeletonTexture;
+    
+    /** foot thingies for the pieces */
+    private ITextureRegion mFootBlueTexture;
+    private ITextureRegion mFootGreenTexture;
+    
     /** selector images */
     private TextureRegion mSelectorTexture0;
     private TextureRegion mSelectorTexture1;
@@ -106,7 +112,7 @@ public class ThePitch {
     public void loadResources(BBBActivity activity, BowlHud hud) {
         mVbo = activity.getVertexBufferObjectManager();
         mHud = hud;
-        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 4 * 196 + 3 * 128, 256);
+        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 7 * 196, 256 + 128);
 
         mChaosBeastmanTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
                 "gfx/team_chaos/beastman00.png", 196 * 0, 0);
@@ -116,18 +122,25 @@ public class ThePitch {
                 "gfx/team_vampire/thrall00.png", 196 * 2, 0);
         mVampireVampireTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
                 "gfx/team_vampire/vampire00.png", 196 * 3, 0);
+        
+        mSkeletonTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/team_undead/skeleton00.png", 196 * 4, 0);
+        mFootBlueTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/foot_blue.png", 196 * 5, 0);
+        mFootGreenTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/foot_green.png", 196 * 6, 0);
 
         mSelectorTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector00.png", 196 * 4 + 0 * 128, 0);
+                "gfx/selector00.png", 0 * 128, 256);
         mSelectorTexture1 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector01.png", 196 * 4 + 1 * 128, 0);
+                "gfx/selector01.png", 1 * 128, 256);
         mSelectorTexture2 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector02.png", 196 * 4 + 1 * 128, 128);
+                "gfx/selector02.png", 2 * 128, 256);
 
         mHintTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/selector03.png", 196 * 4 + 2 * 128, 0);
+                "gfx/selector03.png", 3 * 128, 256);
         mBloodTexture0 = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/blood.png", 196 * 4 + 2 * 128, 128);
+                "gfx/blood.png", 5 * 128, 256);
 
         mTextureAtlas.load();
 
@@ -152,37 +165,45 @@ public class ThePitch {
             mTeam0[i] = new PlayerPiece(4, 4, 6, 8);
             mTeam0[i].setTeam(0);
             mTeam0[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite foot = new Sprite(0, 0, mFootBlueTexture, mVbo);
             Sprite sprite = new Sprite(0, 0, mVampireVampireTexture, mVbo);
             Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
-            sprite.attachChild(status);
-            mTeam0[i].setEntity(sprite, status);
+            foot.attachChild(status);
+            foot.attachChild(sprite);
+            mTeam0[i].setEntity(foot, status);
         }
         for (int i = 3; i < 11; ++i) {
             mTeam0[i] = new PlayerPiece(3, 3, 6, 7);
             mTeam0[i].setTeam(0);
             mTeam0[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite foot = new Sprite(0, 0, mFootBlueTexture, mVbo);
             Sprite sprite = new Sprite(0, 0, mVampireThrallTexture, mVbo);
             Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
-            sprite.attachChild(status);
-            mTeam0[i].setEntity(sprite, status);
+            foot.attachChild(status);
+            foot.attachChild(sprite);
+            mTeam0[i].setEntity(foot, status);
         }
         for (int i = 0; i < 3; ++i) {
             mTeam1[i] = new PlayerPiece(4, 3, 5, 9);
             mTeam1[i].setTeam(1);
             mTeam1[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite foot = new Sprite(0, 0, mFootGreenTexture, mVbo);
             Sprite sprite = new Sprite(0, 0, mChaosWarriorTexture, mVbo);
             Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
-            sprite.attachChild(status);
-            mTeam1[i].setEntity(sprite, status);
+            foot.attachChild(status);
+            foot.attachChild(sprite);
+            mTeam1[i].setEntity(foot, status);
         }
         for (int i = 3; i < 11; ++i) {
             mTeam1[i] = new PlayerPiece(3, 3, 6, 8);
             mTeam1[i].setTeam(1);
             mTeam1[i].setState(PlayerPiece.STATE_STANDING);
+            Sprite foot = new Sprite(0, 0, mFootGreenTexture, mVbo);
             Sprite sprite = new Sprite(0, 0, mChaosBeastmanTexture, mVbo);
             Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", mVbo);
-            sprite.attachChild(status);
-            mTeam1[i].setEntity(sprite, status);
+            foot.attachChild(status);
+            foot.attachChild(sprite);
+            mTeam1[i].setEntity(foot, status);
         }
     }
 
