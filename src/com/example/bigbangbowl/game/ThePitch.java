@@ -79,6 +79,13 @@ public class ThePitch {
     /** the hud... */
     private BowlHud mHud;
 
+    public static final int TUTORIAL_MOVEMENT = 1;
+    public static final int TUTORIAL_BLOCKING = 1000;
+    public static final int TUTORIAL_FINISHED = 0xfffff;
+
+    /** tutorial rules setting - may be used to disable certain things usually available */
+    private int mTutorialRules = TUTORIAL_FINISHED;
+
     /** team which may move atm */
     private int mCurrentTeam;
 
@@ -160,7 +167,7 @@ public class ThePitch {
         mGfxMap.attachChild(grid);
         mPiecesLayer = new Entity();
         mGfxMap.attachChild(mPiecesLayer);
-        
+
         GameResources res = GameResources.getInstance();
         for (int x = 0; x < PITCH_WIDTH; x += 2) {
             for (int y = 0; y < PITCH_HEIGHT; y += 2) {
@@ -240,7 +247,7 @@ public class ThePitch {
             mSelectedPiece = mPitch[index];
             mSelector.setPosition(tileX * GameScene.TILE_PIXELS, tileY * GameScene.TILE_PIXELS);
             mSelector.setVisible(true);
-            if(mSelectedPiece.getState() == PlayerPiece.STATE_DOWN) {
+            if (mSelectedPiece.getState() == PlayerPiece.STATE_DOWN) {
                 Step step = makeStandUpStep(tileX, tileY);
                 mSelectedPath.add(step);
             }
@@ -265,7 +272,7 @@ public class ThePitch {
                 // TODO add attack here!
                 // TODO add BLITZ check here
                 if (mSelectedPath.size() == 0) {
-                    if (mPitch[index].getTeam() != mSelectedPiece.getTeam()) {
+                    if (mTutorialRules >= TUTORIAL_BLOCKING && mPitch[index].getTeam() != mSelectedPiece.getTeam()) {
                         showHint = false;
                         mPathHasAttack = true;
                         mAttackSelector.setVisible(true);
@@ -358,7 +365,7 @@ public class ThePitch {
 
         return step;
     }
-    
+
     /** plans to stand up the player! */
     public Step makeStandUpStep(int tileX, int tileY) {
         Step step = new Step();
@@ -367,9 +374,9 @@ public class ThePitch {
         step.type = Step.TYPE_STAND_UP;
         step.successChance = 1;
         // TODO dkr: add chance to fail where appropriate!
-        
+
         step.movement = Math.min(3, mSelectedPiece.getMV());
-        
+
         return step;
     }
 
@@ -477,7 +484,7 @@ public class ThePitch {
     /** how many steps the currently planned move has */
     public int getCurrentSteps() {
         int movement = 0;
-        for(int i = 0, n = mSelectedPath.size(); i < n; ++i) {
+        for (int i = 0, n = mSelectedPath.size(); i < n; ++i) {
             movement += mSelectedPath.get(i).movement;
         }
         return movement;
@@ -588,7 +595,7 @@ public class ThePitch {
             if (mExecutingTimer <= 0) {
                 mExecutingTimer += STEP_DURATION;
                 boolean success = executeNextPlannedStep();
-                if(mSelectedPath.size() <= 0) mExecutingPlan = false;
+                if (mSelectedPath.size() <= 0) mExecutingPlan = false;
 
                 if (!success) {
                     if (mLogger != null) {
@@ -614,16 +621,16 @@ public class ThePitch {
         case Step.TYPE_STAND_UP:
             return executeNextStandUpStep();
         }
-            
+
         return true;
     }
 
     /** execute a stand up! */
     private boolean executeNextStandUpStep() {
         mCurrentActor.standUp();
-        
+
         mSelectedPath.remove(0);
-        if(mSelectedPath.size() <= 0) mExecutingPlan = false;
+        if (mSelectedPath.size() <= 0) mExecutingPlan = false;
         return true;
     }
 
@@ -904,5 +911,10 @@ public class ThePitch {
         Sprite blood = GameResources.getInstance().createSprite(piece.getPositionX() * GameScene.TILE_PIXELS,
                 piece.getPositionY() * GameScene.TILE_PIXELS, GameResources.FRAME_BLOOD);
         mGfxMapBg.attachChild(blood);
+    }
+    
+    /** limits the rules to only support certain things */
+    public void setTutorialRules(int rules) {
+        mTutorialRules = rules;
     }
 }

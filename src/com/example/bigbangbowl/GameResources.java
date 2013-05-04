@@ -48,6 +48,8 @@ public class GameResources {
     private VertexBufferObjectManager mVbo;
     /** all the neat sprite frames - for the team */
     private BitmapTextureAtlas mTextureAtlas;
+    /** sprite frames for the tutorial */
+    private BitmapTextureAtlas mTutorialAtlas;
 
     /** texture regions for all different things */
     private SparseArray<TextureRegion> mTextureRegions;
@@ -55,6 +57,8 @@ public class GameResources {
     private Font mFont;
     /** special font */
     private BitmapFont mBitmapFont;
+    
+    public static final int FRAME_INVALID = -1;
 
     public static final int FRAME_CHAOS_BEASTMAN = 0;
     public static final int FRAME_CHAOS_WARRIOR = 1;
@@ -73,20 +77,26 @@ public class GameResources {
 
     public static final int FRAME_SIGN_ACCEPT = 12;
     public static final int FRAME_SIGN_DECLINE = 13;
-    public static final int FRAME_BUTTON_ENDTURN = 14;
-    public static final int FRAME_BUTTON_CONFIRM = 15;
-    public static final int FRAME_WARNING_TURNOVER = 16;
+    public static final int FRAME_SIGN_CONTINUE = 14;
+    public static final int FRAME_BUTTON_ENDTURN = 15;
+    public static final int FRAME_BUTTON_CONFIRM = 16;
+    public static final int FRAME_WARNING_TURNOVER = 17;
 
-    public static final int FRAME_MAP_GRID = 17;
+    public static final int FRAME_MAP_GRID = 18;
+
+    public static final int FRAME_TUTORIAL_TEXTBOX = 19;
+    public static final int FRAME_TUTORIAL_CHAR0 = 20;
+    public static final int FRAME_TUTORIAL_CHAR1 = 21;
 
     /**
      * prepares the resources - loads stuff and stores some ... very memory
      * heavy things
      */
     public void init(BBBActivity activity) {
-        mVbo = activity.getVertexBufferObjectManager();
-        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 2048, 1024);
         mTextureRegions = new SparseArray<TextureRegion>();
+        mVbo = activity.getVertexBufferObjectManager();
+
+        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 2048, 1024);
 
         // pieces
         mTextureRegions.put(FRAME_CHAOS_BEASTMAN, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
@@ -135,8 +145,21 @@ public class GameResources {
                 activity, "gfx/sign_accept.png", 0, 256 + 128 + 128));
         mTextureRegions.put(FRAME_SIGN_DECLINE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/sign_decline.png", 256 * 1, 256 + 128 + 128));
+        mTextureRegions.put(FRAME_SIGN_CONTINUE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/sign_continue.png", 256 * 2, 256 + 128 + 128));
 
         mTextureAtlas.load();
+
+        mTutorialAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 1024, 1024);
+
+        mTextureRegions.put(FRAME_TUTORIAL_TEXTBOX, BitmapTextureAtlasTextureRegionFactory.createFromAsset(
+                mTutorialAtlas, activity, "gfx/characters/textbox.png", 0 * 256, 0 * 512));
+        mTextureRegions.put(FRAME_TUTORIAL_CHAR0, BitmapTextureAtlasTextureRegionFactory.createFromAsset(
+                mTutorialAtlas, activity, "gfx/characters/norse.png", 1 * 256, 0 * 512));
+        mTextureRegions.put(FRAME_TUTORIAL_CHAR1, BitmapTextureAtlasTextureRegionFactory.createFromAsset(
+                mTutorialAtlas, activity, "gfx/characters/princess.png", 2 * 256, 0 * 512));
+        
+        mTutorialAtlas.load();
 
         // fonts
         final ITexture strokeFontTexture = new BitmapTextureAtlas(activity.getTextureManager(), 256, 256,

@@ -109,9 +109,11 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
     private TouchSprite mSignAccept;
     private TouchSprite mSignDecline;
+    private TouchSprite mSignContinue;
     private TouchSprite mButtonEndturn;
     private TouchSprite mButtonConfirm;
     private Sprite mWarningTurnover;
+    private Entity mTutorialChat;
 
     /** stored callback - for accept/decline */
     private IConfirmationCallback mConfirmationCallback;
@@ -271,6 +273,15 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
     @Override
     public boolean onSpriteTouched(TouchSprite sprite, TouchEvent touchEvent, float spriteLocalX, float spriteLocalY) {
+        if (sprite == mSignContinue && touchEvent.isActionUp()) {
+            if (mTutorialChat != null) {
+                this.unregisterTouchArea(mSignContinue);
+                mTutorialChat.detachSelf();
+                mTutorialChat = null;
+                mSignContinue = null;
+            }
+        }
+
         if (sprite == mButtonEndturn && touchEvent.isActionUp()) {
             if (mButtonConfirm.isVisible()) {
                 mButtonConfirm.setVisible(false);
@@ -367,6 +378,44 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     public void showWarningTurnover() {
         mTurnoverTimer = TURNOVER_WARNING_DURATION;
         mWarningTurnover.setVisible(true);
+    }
+
+    /** display a tutorial text - with a character */
+    public void showTutorialMessage(int charFrame, boolean left, CharSequence line, Color color) {
+        Entity layer = new Entity();
+        GameResources res = GameResources.getInstance();
+        float scale = .75f;
+        float posY = mCamera.getHeight() - 256 - 256 * scale;
+        if (charFrame != GameResources.FRAME_INVALID) {
+            float posX = 0;
+            if (!left) posX = mCamera.getWidth() - 128 - 128 * scale;
+            Sprite charsprite = res.createSprite(posX, posY, charFrame);
+            layer.attachChild(charsprite);
+            charsprite.setScale(scale);
+        }
+
+        Sprite boxSprite = res.createSprite(.5f * mCamera.getWidth() - 128, posY, GameResources.FRAME_TUTORIAL_TEXTBOX);
+        float scaleX = mCamera.getWidth() / boxSprite.getWidth();
+        boxSprite.setScale(scaleX, scale);
+        layer.attachChild(boxSprite);
+
+        Text text = new Text(4, mCamera.getHeight() - 128, res.getFont(), line, res.getVbo());
+        text.setColor(color);
+        layer.attachChild(text);
+
+        float posX = mCamera.getWidth() - 196;
+        posY = mCamera.getHeight() - 196;
+        TouchSprite continueSign = new TouchSprite(posX, posY, res.getTextureRegion(GameResources.FRAME_SIGN_CONTINUE),
+                res.getVbo());
+        continueSign.setScale(.5f);
+        continueSign.setTouchCallback(this);
+        layer.attachChild(continueSign);
+
+        mTutorialChat = layer;
+        mSignContinue = continueSign;
+
+        this.attachChild(mTutorialChat);
+        this.registerTouchArea(mSignContinue);
     }
 
 }

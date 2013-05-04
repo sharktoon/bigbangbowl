@@ -12,6 +12,7 @@ import android.os.Bundle;
 
 import com.example.bigbangbowl.game.GameScene;
 import com.example.bigbangbowl.scenes.SplashScene;
+import com.example.bigbangbowl.tutorial.TutorialScene;
 
 public class BBBActivity extends BaseGameActivity {
     private ZoomCamera mCamera;
@@ -70,7 +71,7 @@ public class BBBActivity extends BaseGameActivity {
     void startGameScene() {
         GameResources.getInstance().init(this);
         
-        Scene scene = new GameScene(this, mCamera);
+        Scene scene = new TutorialScene(this, mCamera);
         Scene oldScene = mCurrentScene;
         mEngine.setScene(scene);
         mCurrentScene = scene;
