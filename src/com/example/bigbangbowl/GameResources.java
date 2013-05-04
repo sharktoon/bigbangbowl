@@ -144,9 +144,9 @@ public class GameResources {
         mTextureRegions.put(FRAME_SIGN_ACCEPT, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/sign_accept.png", 0, 256 + 128 + 128));
         mTextureRegions.put(FRAME_SIGN_DECLINE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
-                activity, "gfx/sign_decline.png", 256 * 1, 256 + 128 + 128));
+                activity, "gfx/sign_decline.png", 128 * 1, 256 + 128 + 128));
         mTextureRegions.put(FRAME_SIGN_CONTINUE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
-                activity, "gfx/sign_continue.png", 256 * 2, 256 + 128 + 128));
+                activity, "gfx/sign_continue.png", 128 * 2, 256 + 128 + 128));
 
         mTextureAtlas.load();
 

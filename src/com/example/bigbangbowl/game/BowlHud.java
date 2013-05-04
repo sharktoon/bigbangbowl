@@ -127,12 +127,12 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     private float mTurnoverTimer;
 
     public void prepareResources(BBBActivity activity) {
-        float scale = .4f;
-        float posy = BBBActivity.CAMERA_HEIGHT - 128 - 128 * scale;
-        float posx = activity.getCurrentWidth() - 128 - 128 * scale;
+        float scale = 1.0f;
+        float posy = BBBActivity.CAMERA_HEIGHT - 64 - 64 * scale;
+        float posx = activity.getCurrentWidth() - 64 - 64 * scale;
         GameResources res = GameResources.getInstance();
         mSignAccept = new TouchSprite(posx, posy, res.getTextureRegion(GameResources.FRAME_SIGN_ACCEPT), res.getVbo());
-        mSignDecline = new TouchSprite(-128 + 128 * scale, posy,
+        mSignDecline = new TouchSprite(-64 + 64 * scale, posy,
                 res.getTextureRegion(GameResources.FRAME_SIGN_DECLINE), res.getVbo());
         mSignAccept.setScale(scale);
         mSignDecline.setScale(scale);
@@ -403,11 +403,10 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         text.setColor(color);
         layer.attachChild(text);
 
-        float posX = mCamera.getWidth() - 196;
-        posY = mCamera.getHeight() - 196;
+        float posX = mCamera.getWidth() - 128;
+        posY = mCamera.getHeight() - 128;
         TouchSprite continueSign = new TouchSprite(posX, posY, res.getTextureRegion(GameResources.FRAME_SIGN_CONTINUE),
                 res.getVbo());
-        continueSign.setScale(.5f);
         continueSign.setTouchCallback(this);
         layer.attachChild(continueSign);
 
