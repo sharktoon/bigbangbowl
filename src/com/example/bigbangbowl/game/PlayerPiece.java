@@ -100,10 +100,10 @@ public class PlayerPiece {
     /** set the state of this player - when something happened to them */
     public void setState(int state) {
         this.mState = state;
-        
-        if(mStatusDisplay != null) {
+
+        if (mStatusDisplay != null) {
             char letter = ' ';
-            switch(mState) {
+            switch (mState) {
             case STATE_DOWN:
                 letter = 'D';
                 break;
@@ -114,7 +114,7 @@ public class PlayerPiece {
                 letter = 'B';
                 break;
             }
-            
+
             StringBuffer buf = new StringBuffer();
             buf.append(letter);
             mStatusDisplay.setText(buf);
@@ -168,9 +168,9 @@ public class PlayerPiece {
             setState(STATE_DOWN);
             mTurnDone = true;
         }
-        if (mState == STATE_DOWN) {
-            mRemainingMove -= 3;
-        }
+        // if (mState == STATE_DOWN) {
+        // mRemainingMove -= 3;
+        // }
     }
 
     /** retrieve how much movement is left this turn */
@@ -182,11 +182,19 @@ public class PlayerPiece {
     public void useMovement(int amount) {
         mRemainingMove -= amount;
     }
-    
-    public void beginTurn() {
-        if (mState == STATE_DOWN) setState(STATE_STANDING);
+
+    /** stands up the player */
+    public void standUp() {
+        if (mState == STATE_DOWN) {
+            setState(STATE_STANDING);
+            if (mMovementValue > 3) useMovement(3);
+            else useMovement(mRemainingMove);
+        }
     }
-    
+
+    public void beginTurn() {
+    }
+
     /** ends this players turn */
     public void endTurn() {
         mTurnDone = true;

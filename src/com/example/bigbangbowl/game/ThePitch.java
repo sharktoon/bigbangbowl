@@ -72,6 +72,8 @@ public class ThePitch {
 
     /** the graphical map thingy */
     private Entity mGfxMap, mGfxMapBg;
+    /** the layer on the map for the player pieces */
+    private Entity mPiecesLayer;
     /** the random number supplier... */
     private Random mRandom;
     /** the hud... */
@@ -156,6 +158,9 @@ public class ThePitch {
         mGfxMap.attachChild(mGfxMapBg);
         Entity grid = new Entity();
         mGfxMap.attachChild(grid);
+        mPiecesLayer = new Entity();
+        mGfxMap.attachChild(mPiecesLayer);
+        
         GameResources res = GameResources.getInstance();
         for (int x = 0; x < PITCH_WIDTH; x += 2) {
             for (int y = 0; y < PITCH_HEIGHT; y += 2) {
@@ -172,7 +177,7 @@ public class ThePitch {
             int y = places0[i * 2 + 1];
             mTeam0[i].setPosition(x, y);
             mTeam0[i].getEntity().setPosition(x * 128 - 32, y * 128 - 128);
-            map.attachChild(mTeam0[i].getEntity());
+            mPiecesLayer.attachChild(mTeam0[i].getEntity());
 
             mPitch[x + y * PITCH_WIDTH] = mTeam0[i];
         }
@@ -182,7 +187,7 @@ public class ThePitch {
             int y = places1[i * 2 + 1];
             mTeam1[i].setPosition(x, y);
             mTeam1[i].getEntity().setPosition(x * 128 + PIECE_OFFSET_X, y * 128 + PIECE_OFFSET_Y);
-            map.attachChild(mTeam1[i].getEntity());
+            mPiecesLayer.attachChild(mTeam1[i].getEntity());
 
             mPitch[x + y * PITCH_WIDTH] = mTeam1[i];
         }
@@ -235,6 +240,10 @@ public class ThePitch {
             mSelectedPiece = mPitch[index];
             mSelector.setPosition(tileX * GameScene.TILE_PIXELS, tileY * GameScene.TILE_PIXELS);
             mSelector.setVisible(true);
+            if(mSelectedPiece.getState() == PlayerPiece.STATE_DOWN) {
+                Step step = makeStandUpStep(tileX, tileY);
+                mSelectedPath.add(step);
+            }
         }
 
         if (mSelectedPiece == null) {
@@ -330,6 +339,7 @@ public class ThePitch {
         step.tileY = tileY;
         step.type = Step.TYPE_MOVE;
         step.successChance = 1;
+        step.movement = 1;
 
         if (getTackleZones(lastPosX, lastPosY, mSelectedPiece.getTeam()) > 0) {
             int tacklemod = getTackleZones(tileX, tileY, mSelectedPiece.getTeam());
@@ -341,11 +351,25 @@ public class ThePitch {
             step.successChance = 1 - (diceChance - 1) / 6.0f;
         }
 
-        if (mSelectedPath.size() >= mSelectedPiece.getRemainingMove()) {
+        if (getCurrentSteps() >= mSelectedPiece.getRemainingMove()) {
             step.gfi = true;
             step.successChance *= 5.0f / 6.0f;
         }
 
+        return step;
+    }
+    
+    /** plans to stand up the player! */
+    public Step makeStandUpStep(int tileX, int tileY) {
+        Step step = new Step();
+        step.tileX = tileX;
+        step.tileY = tileY;
+        step.type = Step.TYPE_STAND_UP;
+        step.successChance = 1;
+        // TODO dkr: add chance to fail where appropriate!
+        
+        step.movement = Math.min(3, mSelectedPiece.getMV());
+        
         return step;
     }
 
@@ -428,6 +452,7 @@ public class ThePitch {
         step.tileY = tileY;
         step.type = Step.TYPE_BLOCK;
         step.successChance = 1;
+        step.movement = 1;
 
         int dice = getBlockDice(tileX, tileY, mSelectedPiece);
         step.blockDice = dice;
@@ -451,7 +476,11 @@ public class ThePitch {
 
     /** how many steps the currently planned move has */
     public int getCurrentSteps() {
-        return mSelectedPath.size();
+        int movement = 0;
+        for(int i = 0, n = mSelectedPath.size(); i < n; ++i) {
+            movement += mSelectedPath.get(i).movement;
+        }
+        return movement;
     }
 
     /** how many steps the currently selected player may make */
@@ -559,6 +588,7 @@ public class ThePitch {
             if (mExecutingTimer <= 0) {
                 mExecutingTimer += STEP_DURATION;
                 boolean success = executeNextPlannedStep();
+                if(mSelectedPath.size() <= 0) mExecutingPlan = false;
 
                 if (!success) {
                     if (mLogger != null) {
@@ -581,7 +611,19 @@ public class ThePitch {
             return executeNextMoveStep();
         case Step.TYPE_BLOCK:
             return executeNextBlockStep();
+        case Step.TYPE_STAND_UP:
+            return executeNextStandUpStep();
         }
+            
+        return true;
+    }
+
+    /** execute a stand up! */
+    private boolean executeNextStandUpStep() {
+        mCurrentActor.standUp();
+        
+        mSelectedPath.remove(0);
+        if(mSelectedPath.size() <= 0) mExecutingPlan = false;
         return true;
     }
 

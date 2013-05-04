@@ -12,11 +12,17 @@ public class Step {
     public static final int TYPE_BLOCK = 1;
     /** pass */
     public static final int TYPE_PASS = 2;
+    /** getting up from "down" */
+    public static final int TYPE_STAND_UP = 3;
 
     /** target of this step */
     public int tileX, tileY;
     /** type of this step */
     public int type;
+    
+    /** how much movement is used up as part of this step */
+    public int movement;
+    
     /** graphical display */
     public Sprite sprite;
 
