@@ -40,10 +40,10 @@ public class GameResources {
 
     /** free up memory claimed */
     public static void purge() {
-        if(sInstance != null) sInstance.dispose();
+        if (sInstance != null) sInstance.dispose();
         sInstance = null;
     }
-    
+
     /** necessary stuff for sprite creation */
     private VertexBufferObjectManager mVbo;
     /** all the neat sprite frames - for the team */
@@ -70,12 +70,14 @@ public class GameResources {
     public static final int FRAME_SELECTOR2 = 9;
     public static final int FRAME_HINT = 10;
     public static final int FRAME_BLOOD = 11;
-    
+
     public static final int FRAME_SIGN_ACCEPT = 12;
     public static final int FRAME_SIGN_DECLINE = 13;
     public static final int FRAME_BUTTON_ENDTURN = 14;
     public static final int FRAME_BUTTON_CONFIRM = 15;
     public static final int FRAME_WARNING_TURNOVER = 16;
+
+    public static final int FRAME_MAP_GRID = 17;
 
     /**
      * prepares the resources - loads stuff and stores some ... very memory
@@ -98,12 +100,15 @@ public class GameResources {
 
         mTextureRegions.put(FRAME_SKELETON, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/team_undead/skeleton00.png", 196 * 4, 0));
-        
+
         // feet
         mTextureRegions.put(FRAME_FOOT_BLUE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/foot_blue.png", 196 * 5, 0));
         mTextureRegions.put(FRAME_FOOT_GREEN, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/foot_green.png", 196 * 6, 0));
+
+        mTextureRegions.put(FRAME_MAP_GRID, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/map_grid.png", 196 * 7, 0));
 
         // selectors
         mTextureRegions.put(FRAME_SELECTOR0, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
@@ -118,21 +123,21 @@ public class GameResources {
                 "gfx/selector03.png", 3 * 128, 256));
         mTextureRegions.put(FRAME_BLOOD, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/blood.png", 4 * 128, 256));
-        
+
         // buttons
-        mTextureRegions.put(FRAME_BUTTON_ENDTURN, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/buttons/endturn.png", 0, 256 + 128));
-        mTextureRegions.put(FRAME_BUTTON_CONFIRM, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/buttons/confirm.png", 512, 256 + 128));
-        mTextureRegions.put(FRAME_WARNING_TURNOVER, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/buttons/turnover.png", 1024, 256 + 128));
-        mTextureRegions.put(FRAME_SIGN_ACCEPT, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/sign_accept.png", 0, 256 + 128 + 128));
-        mTextureRegions.put(FRAME_SIGN_DECLINE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
-                "gfx/sign_decline.png", 256 * 1, 256 + 128 + 128));
+        mTextureRegions.put(FRAME_BUTTON_ENDTURN, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/buttons/endturn.png", 0, 256 + 128));
+        mTextureRegions.put(FRAME_BUTTON_CONFIRM, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/buttons/confirm.png", 512, 256 + 128));
+        mTextureRegions.put(FRAME_WARNING_TURNOVER, BitmapTextureAtlasTextureRegionFactory.createFromAsset(
+                mTextureAtlas, activity, "gfx/buttons/turnover.png", 1024, 256 + 128));
+        mTextureRegions.put(FRAME_SIGN_ACCEPT, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/sign_accept.png", 0, 256 + 128 + 128));
+        mTextureRegions.put(FRAME_SIGN_DECLINE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/sign_decline.png", 256 * 1, 256 + 128 + 128));
 
         mTextureAtlas.load();
-        
+
         // fonts
         final ITexture strokeFontTexture = new BitmapTextureAtlas(activity.getTextureManager(), 256, 256,
                 TextureOptions.BILINEAR);
@@ -143,18 +148,17 @@ public class GameResources {
         this.mBitmapFont = new BitmapFont(activity.getTextureManager(), activity.getAssets(), "font/BitmapFont.fnt");
         this.mBitmapFont.load();
     }
-    
+
     /** clean up */
     private void dispose() {
         mTextureRegions.clear();
         mTextureAtlas.unload();
     }
-    
+
     /** access the vertex buffer manager */
     public VertexBufferObjectManager getVbo() {
         return mVbo;
     }
-
 
     /** creates a sprite with the given frame id */
     public Sprite createSprite(float posX, float posY, int frameId) {
@@ -166,12 +170,12 @@ public class GameResources {
     public TextureRegion getTextureRegion(int frameId) {
         return mTextureRegions.get(frameId);
     }
-    
+
     /** access the standard font */
     public Font getFont() {
         return mFont;
     }
-    
+
     /** access the bitmap font */
     public BitmapFont getBitmapFont() {
         return mBitmapFont;

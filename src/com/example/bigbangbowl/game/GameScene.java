@@ -67,7 +67,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
                 "gfx/field_green03.png", 3 * 256, 0);
 
         mTextureAtlas.load();
-        
+
         mHud = new BowlHud();
         mHud.prepareResources(activity);
         mHud.setEndturnCallback(this);
@@ -95,7 +95,8 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
                 else if (x == MAP_WIDTH - 2) region = mFieldTextureRight;
                 else if (y == 0 || y == MAP_HEIGHT - 2) region = mFieldTexture1;
                 else region = mFieldTexture0;
-                mFieldSprites[index] = new Sprite(x * 128, y * 128, region, activity.getVertexBufferObjectManager());
+                mFieldSprites[index] = new Sprite(x * TILE_PIXELS - TILE_PIXELS, y * TILE_PIXELS, region,
+                        activity.getVertexBufferObjectManager());
                 map.attachChild(mFieldSprites[index]);
             }
         }

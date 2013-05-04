@@ -30,7 +30,7 @@ public class ThePitch {
     /** how long the movement hints are shown */
     private static final float HINT_SHOW_DURATION = 2.0f;
     /** width/length of the pitch */
-    public static final int PITCH_WIDTH = 24;
+    public static final int PITCH_WIDTH = 22;
     /** height/breadth of the pitch */
     public static final int PITCH_HEIGHT = 10;
 
@@ -154,6 +154,16 @@ public class ThePitch {
         mGfxMap = map;
         mGfxMapBg = new Entity();
         mGfxMap.attachChild(mGfxMapBg);
+        Entity grid = new Entity();
+        mGfxMap.attachChild(grid);
+        GameResources res = GameResources.getInstance();
+        for (int x = 0; x < PITCH_WIDTH; x += 2) {
+            for (int y = 0; y < PITCH_HEIGHT; y += 2) {
+                Sprite sprite = res.createSprite(x * GameScene.TILE_PIXELS, y * GameScene.TILE_PIXELS,
+                        GameResources.FRAME_MAP_GRID);
+                grid.attachChild(sprite);
+            }
+        }
 
         int places0[] = { 11, 3, 11, 4, 11, 5, 10, 7, 10, 1, 5, 4 };
         int places1[] = { 12, 3, 12, 4, 12, 5, 13, 7, 13, 1, 20, 4 };
