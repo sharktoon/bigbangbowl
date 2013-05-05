@@ -20,12 +20,13 @@ import org.andengine.util.color.Color;
 import com.example.bigbangbowl.BBBActivity;
 import com.example.bigbangbowl.GameResources;
 import com.example.bigbangbowl.game.BowlHud;
+import com.example.bigbangbowl.game.PlayerPiece;
 import com.example.bigbangbowl.game.ThePitch;
 import com.example.bigbangbowl.game.BowlHud.IConfirmationCallback;
 import com.example.bigbangbowl.game.BowlHud.IEndturnCallback;
 
-public class TutorialScene extends Scene  implements IOnSceneTouchListener, IScrollDetectorListener,
-IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback {
+public class TutorialScene extends Scene implements IOnSceneTouchListener, IScrollDetectorListener,
+        IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback, BowlHud.ITutorialCallback {
     /** number of tiles - width */
     private static final int MAP_WIDTH = 24;
     /** number of tiles - height */
@@ -56,6 +57,9 @@ IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback {
     /** the hud */
     private BowlHud mHud;
 
+    /** the current tutorial step */
+    private int mTutorialStep = 0;
+
     public TutorialScene(BBBActivity activity, ZoomCamera camera) {
         // mEngine = activity.getEngine();
         mZoomCamera = camera;
@@ -82,7 +86,7 @@ IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback {
 
         this.setBackground(new Background(0, 0, 0));
 
-        Entity map = new Entity(-TILE_PIXELS, 0);
+        Entity map = new Entity(0, 0);
 
         int size = MAP_HEIGHT * MAP_WIDTH / 4;
         mFieldSprites = new Sprite[size];
@@ -124,9 +128,7 @@ IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback {
         mMapDisplay.setPosition(posX, posY);
 
         mMapDisplay.attachChild(map);
-
-        mPitch.placeTeams(mMapDisplay);
-
+        mPitch.setMap(mMapDisplay);
         this.attachChild(mMapDisplay);
 
         this.setOnAreaTouchTraversalFrontToBack();
@@ -137,8 +139,10 @@ IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback {
         this.setOnSceneTouchListener(this);
         this.setTouchAreaBindingOnActionDownEnabled(true);
 
-        
-        mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true, "So, you want to be a coach?", Color.YELLOW);
+        mHud.registerTutorialObserver(this);
+        this.onTutorialMessageContinue();
+
+        // mPitch.placeTeams();
     }
 
     @Override
@@ -315,6 +319,49 @@ IPinchZoomDetectorListener, IConfirmationCallback, IEndturnCallback {
     @Override
     public void onEndturnSelected() {
         mPitch.switchTeams();
+    }
+    
+    PlayerPiece mSkeleton;
+
+    @Override
+    public void onTutorialMessageContinue() {
+        ++mTutorialStep;
+        switch (mTutorialStep) {
+        case 1:
+            mHud.showTutorialMessage(GameResources.FRAME_INVALID, true, "TUTORIAL 1: Scoring!", Color.RED);
+            break;
+        case 2:
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
+                    "Welcome to the Pitch!\nThey told me you want to be a coach.", Color.CYAN);
+            break;
+        case 3:
+            mSkeleton = mPitch.createPiece(GameResources.FRAME_SKELETON, 3, 2, 5, 7, 3);
+            mSkeleton.resetTeamTurn();
+            mPitch.placePiece(mSkeleton, 16, 4);
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
+                    "We got you a practice player.\nHe’s really good at following orders.", Color.YELLOW);
+            break;
+        case 4:
+            // spawn skeleton
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
+                    "To score, he needs the ball.\nI'll give it him.\nYou order him to the endzone.", Color.CYAN);
+            break;
+        case 5:
+            mSkeleton.setHasBall(true);
+            break;
+        }
+    }
+
+    @Override
+    public void onTutorialPlanBegins() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onTutorialPlanExecuted() {
+        // TODO Auto-generated method stub
+
     }
 
 }

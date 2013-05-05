@@ -1,9 +1,11 @@
 package com.example.bigbangbowl.game;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.entity.Entity;
+import org.andengine.entity.modifier.MoveModifier;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
@@ -32,6 +34,18 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
         /** callback when the user DECLINEs their choice */
         public void onConfirmationDecline();
+    }
+
+    /** various callbacks relevant during tutorial! */
+    public static interface ITutorialCallback {
+        /** tutorial message was just hidden */
+        public void onTutorialMessageContinue();
+
+        /** tutorial - path was just begun */
+        public void onTutorialPlanBegins();
+
+        /** tutorial - a plan has been fully executed and displayed */
+        public void onTutorialPlanExecuted();
     }
 
     public static interface IEndturnCallback {
@@ -114,11 +128,18 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     private TouchSprite mButtonConfirm;
     private Sprite mWarningTurnover;
     private Entity mTutorialChat;
+    /**
+     * last picture shown - invalid when not immediately displaying tutorial
+     * again
+     */
+    private int mLastTutorialCharFrame;
 
     /** stored callback - for accept/decline */
     private IConfirmationCallback mConfirmationCallback;
     /** stored callback - for end turn */
     private IEndturnCallback mEndturnCallback;
+    /** stored observers - for tutorial stuff */
+    private ArrayList<BowlHud.ITutorialCallback> mTutorialCallback = new ArrayList<BowlHud.ITutorialCallback>();
     /** visible dice log stuff */
     private Vector<UpdatedEntityContainer> mLogDisplay;
     /** current displayed team name */
@@ -132,8 +153,8 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         float posx = activity.getCurrentWidth() - 64 - 64 * scale;
         GameResources res = GameResources.getInstance();
         mSignAccept = new TouchSprite(posx, posy, res.getTextureRegion(GameResources.FRAME_SIGN_ACCEPT), res.getVbo());
-        mSignDecline = new TouchSprite(-64 + 64 * scale, posy,
-                res.getTextureRegion(GameResources.FRAME_SIGN_DECLINE), res.getVbo());
+        mSignDecline = new TouchSprite(-64 + 64 * scale, posy, res.getTextureRegion(GameResources.FRAME_SIGN_DECLINE),
+                res.getVbo());
         mSignAccept.setScale(scale);
         mSignDecline.setScale(scale);
         mSignAccept.setTouchCallback(this);
@@ -279,6 +300,14 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
                 mTutorialChat.detachSelf();
                 mTutorialChat = null;
                 mSignContinue = null;
+
+                for (int i = mTutorialCallback.size() - 1; i >= 0; --i) {
+                    mTutorialCallback.get(i).onTutorialMessageContinue();
+                }
+
+                if (mTutorialChat == null) {
+                    mLastTutorialCharFrame = GameResources.FRAME_INVALID;
+                }
             }
         }
 
@@ -392,6 +421,17 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
             Sprite charsprite = res.createSprite(posX, posY, charFrame);
             layer.attachChild(charsprite);
             charsprite.setScale(scale);
+            
+            if(mLastTutorialCharFrame != charFrame) {
+                mLastTutorialCharFrame = charFrame;
+                float offset;
+                if(left) offset = -256;
+                else offset = 256;
+                        
+                charsprite.setPosition(posX + offset, posY);
+                MoveModifier move = new MoveModifier(.3f, posX + offset, posX, posY, posY);
+                charsprite.registerEntityModifier(move);
+            }
         }
 
         Sprite boxSprite = res.createSprite(.5f * mCamera.getWidth() - 128, posY, GameResources.FRAME_TUTORIAL_TEXTBOX);
@@ -415,6 +455,24 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
         this.attachChild(mTutorialChat);
         this.registerTouchArea(mSignContinue);
+    }
+
+    /** register a new tutorial observer */
+    public void registerTutorialObserver(BowlHud.ITutorialCallback observer) {
+        for (int i = mTutorialCallback.size() - 1; i >= 0; --i) {
+            if (mTutorialCallback.get(i) == observer) return;
+        }
+        mTutorialCallback.add(observer);
+    }
+
+    /** unregister a tutorial observer */
+    public void unregisterTutorialObserver(BowlHud.ITutorialCallback observer) {
+        for (int i = mTutorialCallback.size(); i >= 0; --i) {
+            if (mTutorialCallback.get(i) == observer) {
+                mTutorialCallback.remove(i);
+                return;
+            }
+        }
     }
 
 }

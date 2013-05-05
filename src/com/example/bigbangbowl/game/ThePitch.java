@@ -83,7 +83,10 @@ public class ThePitch {
     public static final int TUTORIAL_BLOCKING = 1000;
     public static final int TUTORIAL_FINISHED = 0xfffff;
 
-    /** tutorial rules setting - may be used to disable certain things usually available */
+    /**
+     * tutorial rules setting - may be used to disable certain things usually
+     * available
+     */
     private int mTutorialRules = TUTORIAL_FINISHED;
 
     /** team which may move atm */
@@ -107,59 +110,48 @@ public class ThePitch {
         mRandom = new Random(System.currentTimeMillis());
     }
 
-    public void createTeams(BBBActivity activity) {
+    public PlayerPiece createPiece(int frame, int ST, int AG, int MA, int AV, int team) {
         GameResources res = GameResources.getInstance();
         BitmapFont font = res.getBitmapFont();
+
+        PlayerPiece piece = new PlayerPiece(ST, AG, MA, AV);
+        piece.setTeam(team);
+        piece.setState(PlayerPiece.STATE_STANDING);
+        Sprite foot;
+        if (team == 0) foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_BLUE);
+        else if (team == 1) foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_GREEN);
+        else foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_YELLOW);
+
+        Sprite sprite = res.createSprite(0, 0, frame);
+
+        Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
+        foot.attachChild(status);
+        foot.attachChild(sprite);
+        piece.setEntity(foot, status);
+
+        return piece;
+    }
+
+    public void createTeams(BBBActivity activity) {
         mTeam0 = new PlayerPiece[11];
         mTeam1 = new PlayerPiece[11];
         mPitch = new PlayerPiece[PITCH_HEIGHT * PITCH_WIDTH];
         for (int i = 0; i < 3; ++i) {
-            mTeam0[i] = new PlayerPiece(4, 4, 6, 8);
-            mTeam0[i].setTeam(0);
-            mTeam0[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_BLUE);
-            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_VAMPIRE_VAMPIRE);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
-            foot.attachChild(status);
-            foot.attachChild(sprite);
-            mTeam0[i].setEntity(foot, status);
+            mTeam0[i] = createPiece(GameResources.FRAME_VAMPIRE_VAMPIRE, 4, 4, 6, 8, 0);
         }
         for (int i = 3; i < 11; ++i) {
-            mTeam0[i] = new PlayerPiece(3, 3, 6, 7);
-            mTeam0[i].setTeam(0);
-            mTeam0[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_BLUE);
-            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_VAMPIRE_THRALL);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
-            foot.attachChild(status);
-            foot.attachChild(sprite);
-            mTeam0[i].setEntity(foot, status);
+            mTeam0[i] = createPiece(GameResources.FRAME_VAMPIRE_THRALL, 3, 3, 6, 7, 0);
         }
         for (int i = 0; i < 3; ++i) {
-            mTeam1[i] = new PlayerPiece(4, 3, 5, 9);
-            mTeam1[i].setTeam(1);
-            mTeam1[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_GREEN);
-            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_CHAOS_WARRIOR);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
-            foot.attachChild(status);
-            foot.attachChild(sprite);
-            mTeam1[i].setEntity(foot, status);
+            mTeam1[i] = createPiece(GameResources.FRAME_CHAOS_WARRIOR, 4, 3, 5, 9, 1);
         }
         for (int i = 3; i < 11; ++i) {
-            mTeam1[i] = new PlayerPiece(3, 3, 6, 8);
-            mTeam1[i].setTeam(1);
-            mTeam1[i].setState(PlayerPiece.STATE_STANDING);
-            Sprite foot = res.createSprite(0, 0, GameResources.FRAME_FOOT_GREEN);
-            Sprite sprite = res.createSprite(0, 0, GameResources.FRAME_CHAOS_BEASTMAN);
-            Text status = new Text(-PIECE_OFFSET_X, -PIECE_OFFSET_Y, font, " ", res.getVbo());
-            foot.attachChild(status);
-            foot.attachChild(sprite);
-            mTeam1[i].setEntity(foot, status);
+            mTeam1[i] = createPiece(GameResources.FRAME_CHAOS_BEASTMAN, 3, 3, 6, 8, 1);
         }
     }
 
-    public void placeTeams(Entity map) {
+    /** set the base map entity on which to place the grid and everything */
+    public void setMap(Entity map) {
         mGfxMap = map;
         mGfxMapBg = new Entity();
         mGfxMap.attachChild(mGfxMapBg);
@@ -176,31 +168,57 @@ public class ThePitch {
                 grid.attachChild(sprite);
             }
         }
+    }
 
+    public void placeTeams() {
         int places0[] = { 11, 3, 11, 4, 11, 5, 10, 7, 10, 1, 5, 4 };
         int places1[] = { 12, 3, 12, 4, 12, 5, 13, 7, 13, 1, 20, 4 };
         for (int i = 0; i < places0.length / 2; ++i) {
             int x = places0[i * 2];
             int y = places0[i * 2 + 1];
-            mTeam0[i].setPosition(x, y);
-            mTeam0[i].getEntity().setPosition(x * 128 - 32, y * 128 - 128);
-            mPiecesLayer.attachChild(mTeam0[i].getEntity());
 
-            mPitch[x + y * PITCH_WIDTH] = mTeam0[i];
+            placePiece(mTeam0[i], x, y);
+            // mTeam0[i].setPosition(x, y);
+            // mTeam0[i].getEntity().setPosition(x * 128 - 32, y * 128 - 128);
+            // mPiecesLayer.attachChild(mTeam0[i].getEntity());
+            //
+            // mPitch[x + y * PITCH_WIDTH] = mTeam0[i];
         }
 
         for (int i = 0; i < places1.length / 2; ++i) {
             int x = places1[i * 2];
             int y = places1[i * 2 + 1];
-            mTeam1[i].setPosition(x, y);
-            mTeam1[i].getEntity().setPosition(x * 128 + PIECE_OFFSET_X, y * 128 + PIECE_OFFSET_Y);
-            mPiecesLayer.attachChild(mTeam1[i].getEntity());
-
-            mPitch[x + y * PITCH_WIDTH] = mTeam1[i];
+            placePiece(mTeam1[i], x, y);
+            // mTeam1[i].setPosition(x, y);
+            // mTeam1[i].getEntity().setPosition(x * 128 + PIECE_OFFSET_X, y *
+            // 128 + PIECE_OFFSET_Y);
+            // mPiecesLayer.attachChild(mTeam1[i].getEntity());
+            //
+            // mPitch[x + y * PITCH_WIDTH] = mTeam1[i];
         }
 
         mCurrentTeam = mRandom.nextInt(2);
         switchTeams();
+    }
+
+    /**
+     * places a single player
+     * 
+     * @return false if placing failed, b/c square was occupied
+     */
+    public boolean placePiece(PlayerPiece piece, int tileX, int tileY) {
+        int index = tileX + tileY * PITCH_WIDTH;
+        if (mPitch[index] != null) return false;
+
+        mPitch[index] = piece;
+        piece.setPosition(tileX, tileY);
+        if (piece.getEntity() != null) {
+            piece.getEntity().setPosition(tileX * GameScene.TILE_PIXELS + PIECE_OFFSET_X,
+                    tileY * GameScene.TILE_PIXELS + PIECE_OFFSET_Y);
+            mPiecesLayer.attachChild(piece.getEntity());
+        }
+
+        return true;
     }
 
     public void dispose() {
@@ -241,7 +259,11 @@ public class ThePitch {
         }
 
         int index = tileX + tileY * PITCH_WIDTH;
-        if (mPitch[index] != null && mPitch[index].getTeam() == mCurrentTeam && mPitch[index].canAct()) {
+        boolean teamAllowed = false;
+        if (mPitch[index] != null) {
+            teamAllowed = mPitch[index].getTeam() == mCurrentTeam || mPitch[index].getTeam() > 1;
+        }
+        if (mPitch[index] != null && teamAllowed && mPitch[index].canAct()) {
             cancelPlannedMove();
 
             mSelectedPiece = mPitch[index];
@@ -912,7 +934,7 @@ public class ThePitch {
                 piece.getPositionY() * GameScene.TILE_PIXELS, GameResources.FRAME_BLOOD);
         mGfxMapBg.attachChild(blood);
     }
-    
+
     /** limits the rules to only support certain things */
     public void setTutorialRules(int rules) {
         mTutorialRules = rules;

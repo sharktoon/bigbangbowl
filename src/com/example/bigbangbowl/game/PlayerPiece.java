@@ -1,7 +1,10 @@
 package com.example.bigbangbowl.game;
 
 import org.andengine.entity.Entity;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
+
+import com.example.bigbangbowl.GameResources;
 
 /**
  * representation of a player piece - like a human blitzer
@@ -51,6 +54,8 @@ public class PlayerPiece {
     private Entity mEntity;
     /** the status display letter */
     private Text mStatusDisplay;
+    /** the display of a ball carried by this player */
+    private Sprite mBall;
 
     public PlayerPiece(int ST, int AG, int MV, int AV) {
         this.mAgility = AG;
@@ -203,9 +208,34 @@ public class PlayerPiece {
     /** check if this piece can act... still */
     public boolean canAct() {
         if (mTurnDone) return false;
-        if (mState == STATE_STANDING) return true;
+        if (mState == STATE_STANDING || mState == STATE_HAS_BALL) return true;
         if (mState == STATE_DOWN) return true;
         return false;
+    }
+
+    /** set the player flag carry ball */
+    public void setHasBall(boolean value) {
+        if (value) {
+            mState = STATE_HAS_BALL;
+            if (mBall == null) {
+                mBall = GameResources.getInstance().createSprite(-ThePitch.PIECE_OFFSET_X, -ThePitch.PIECE_OFFSET_Y,
+                        GameResources.FRAME_BALL_SMALL);
+                mEntity.attachChild(mBall);
+            }
+        } else {
+            if (mState == STATE_HAS_BALL) {
+                mState = STATE_STANDING;
+            }
+            if (mBall != null) {
+                mBall.detachSelf();
+                mBall = null;
+            }
+        }
+    }
+
+    /** check if the player carries the ball */
+    public boolean hasBall() {
+        return mState == STATE_HAS_BALL;
     }
 
 }

@@ -125,9 +125,10 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IScrollDe
 
         mMapDisplay.attachChild(map);
 
-        mPitch.placeTeams(mMapDisplay);
-
+        mPitch.setMap(mMapDisplay);
         this.attachChild(mMapDisplay);
+
+        mPitch.placeTeams();
 
         this.setOnAreaTouchTraversalFrontToBack();
 

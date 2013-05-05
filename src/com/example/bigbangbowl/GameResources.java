@@ -57,7 +57,7 @@ public class GameResources {
     private Font mFont;
     /** special font */
     private BitmapFont mBitmapFont;
-    
+
     public static final int FRAME_INVALID = -1;
 
     public static final int FRAME_CHAOS_BEASTMAN = 0;
@@ -66,27 +66,32 @@ public class GameResources {
     public static final int FRAME_VAMPIRE_VAMPIRE = 3;
     public static final int FRAME_SKELETON = 4;
 
-    public static final int FRAME_FOOT_BLUE = 5;
-    public static final int FRAME_FOOT_GREEN = 6;
+    public static final int FRAME_FOOT_BLUE = 8000;
+    public static final int FRAME_FOOT_GREEN = 8001;
+    public static final int FRAME_FOOT_YELLOW = 8002;
 
-    public static final int FRAME_SELECTOR0 = 7;
-    public static final int FRAME_SELECTOR1 = 8;
-    public static final int FRAME_SELECTOR2 = 9;
-    public static final int FRAME_HINT = 10;
-    public static final int FRAME_BLOOD = 11;
+    public static final int FRAME_SELECTOR0 = 8010;
+    public static final int FRAME_SELECTOR1 = 8011;
+    public static final int FRAME_SELECTOR2 = 8012;
+    public static final int FRAME_HINT = 8020;
+    public static final int FRAME_BLOOD = 8050;
 
-    public static final int FRAME_SIGN_ACCEPT = 12;
-    public static final int FRAME_SIGN_DECLINE = 13;
-    public static final int FRAME_SIGN_CONTINUE = 14;
-    public static final int FRAME_BUTTON_ENDTURN = 15;
-    public static final int FRAME_BUTTON_CONFIRM = 16;
-    public static final int FRAME_WARNING_TURNOVER = 17;
+    public static final int FRAME_BALL = 8090;
+    public static final int FRAME_BALL_SMALL = 8091;
 
-    public static final int FRAME_MAP_GRID = 18;
+    public static final int FRAME_SIGN_ACCEPT = 16000;
+    public static final int FRAME_SIGN_DECLINE = 16001;
+    public static final int FRAME_SIGN_CONTINUE = 16002;
+    public static final int FRAME_BUTTON_ENDTURN = 16010;
+    public static final int FRAME_BUTTON_CONFIRM = 16011;
 
-    public static final int FRAME_TUTORIAL_TEXTBOX = 19;
-    public static final int FRAME_TUTORIAL_CHAR0 = 20;
-    public static final int FRAME_TUTORIAL_CHAR1 = 21;
+    public static final int FRAME_WARNING_TURNOVER = 16100;
+
+    public static final int FRAME_MAP_GRID = 16200;
+
+    public static final int FRAME_TUTORIAL_TEXTBOX = 20000;
+    public static final int FRAME_TUTORIAL_CHAR0 = 20010;
+    public static final int FRAME_TUTORIAL_CHAR1 = 20011;
 
     /**
      * prepares the resources - loads stuff and stores some ... very memory
@@ -116,9 +121,11 @@ public class GameResources {
                 activity, "gfx/foot_blue.png", 196 * 5, 0));
         mTextureRegions.put(FRAME_FOOT_GREEN, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/foot_green.png", 196 * 6, 0));
+        mTextureRegions.put(FRAME_FOOT_YELLOW, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/foot_yellow.png", 196 * 7, 0));
 
         mTextureRegions.put(FRAME_MAP_GRID, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
-                activity, "gfx/map_grid.png", 196 * 7, 0));
+                activity, "gfx/map_grid.png", 196 * 8, 0));
 
         // selectors
         mTextureRegions.put(FRAME_SELECTOR0, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
@@ -133,6 +140,11 @@ public class GameResources {
                 "gfx/selector03.png", 3 * 128, 256));
         mTextureRegions.put(FRAME_BLOOD, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
                 activity, "gfx/blood.png", 4 * 128, 256));
+
+        mTextureRegions.put(FRAME_BALL, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas, activity,
+                "gfx/ball.png", 5 * 128, 256));
+        mTextureRegions.put(FRAME_BALL_SMALL, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/ball_small.png", 5 * 128, 256));
 
         // buttons
         mTextureRegions.put(FRAME_BUTTON_ENDTURN, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
@@ -158,7 +170,7 @@ public class GameResources {
                 mTutorialAtlas, activity, "gfx/characters/norse.png", 1 * 256, 0 * 512));
         mTextureRegions.put(FRAME_TUTORIAL_CHAR1, BitmapTextureAtlasTextureRegionFactory.createFromAsset(
                 mTutorialAtlas, activity, "gfx/characters/princess.png", 2 * 256, 0 * 512));
-        
+
         mTutorialAtlas.load();
 
         // fonts

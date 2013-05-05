@@ -70,8 +70,9 @@ public class BBBActivity extends BaseGameActivity {
 
     void startGameScene() {
         GameResources.getInstance().init(this);
-        
+
         Scene scene = new TutorialScene(this, mCamera);
+        // Scene scene = new GameScene(this, mCamera);
         Scene oldScene = mCurrentScene;
         mEngine.setScene(scene);
         mCurrentScene = scene;
