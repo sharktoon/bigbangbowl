@@ -146,11 +146,18 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     private Text mTeamName;
     /** how long the turnover thingy is still visible */
     private float mTurnoverTimer;
+    
+    /** width and height */
+    private float mWidth, mHeight;
 
     public void prepareResources(BBBActivity activity) {
         float scale = 1.0f;
         float posy = BBBActivity.CAMERA_HEIGHT - 64 - 64 * scale;
         float posx = activity.getCurrentWidth() - 64 - 64 * scale;
+        
+        mWidth = activity.getCurrentWidth();
+        mHeight = BBBActivity.CAMERA_HEIGHT;
+        
         GameResources res = GameResources.getInstance();
         mSignAccept = new TouchSprite(posx, posy, res.getTextureRegion(GameResources.FRAME_SIGN_ACCEPT), res.getVbo());
         mSignDecline = new TouchSprite(-64 + 64 * scale, posy, res.getTextureRegion(GameResources.FRAME_SIGN_DECLINE),
@@ -420,10 +427,10 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         Entity layer = new Entity();
         GameResources res = GameResources.getInstance();
         float scale = .75f;
-        float posY = mCamera.getHeight() - 256 - 256 * scale;
+        float posY = mHeight - 256 - 256 * scale;
         if (charFrame != GameResources.FRAME_INVALID) {
             float posX = 0;
-            if (!left) posX = mCamera.getWidth() - 128 - 128 * scale;
+            if (!left) posX = mWidth - 128 - 128 * scale;
             Sprite charsprite = res.createSprite(posX, posY, charFrame);
             layer.attachChild(charsprite);
             charsprite.setScale(scale);
@@ -440,17 +447,17 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
             }
         }
 
-        Sprite boxSprite = res.createSprite(.5f * mCamera.getWidth() - 128, posY, GameResources.FRAME_TUTORIAL_TEXTBOX);
-        float scaleX = mCamera.getWidth() / boxSprite.getWidth();
+        Sprite boxSprite = res.createSprite(.5f * mWidth - 128, posY, GameResources.FRAME_TUTORIAL_TEXTBOX);
+        float scaleX = mWidth / boxSprite.getWidth();
         boxSprite.setScale(scaleX, scale);
         layer.attachChild(boxSprite);
 
-        Text text = new Text(4, mCamera.getHeight() - 128, res.getFont(), line, res.getVbo());
+        Text text = new Text(4, mHeight - 128, res.getFont(), line, res.getVbo());
         text.setColor(color);
         layer.attachChild(text);
 
-        float posX = mCamera.getWidth() - 128;
-        posY = mCamera.getHeight() - 128;
+        float posX = mWidth - 128;
+        posY = mHeight - 128;
         TouchSprite continueSign = new TouchSprite(posX, posY, res.getTextureRegion(GameResources.FRAME_SIGN_CONTINUE),
                 res.getVbo());
         continueSign.setTouchCallback(this);

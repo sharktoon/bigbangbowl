@@ -373,7 +373,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
         case 9:
             mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
                     "We better start over.\nMove it diagonally, if you like.", Color.YELLOW);
-            mPitch.removePieceFromField(mSkeleton, true);
+            mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 10:
             mSkeleton.resetTeamTurn();
@@ -382,7 +382,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
         case 11:
             mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
                     "Do look for the endzone.\nAnd order the skeleton there.", Color.CYAN);
-            mPitch.removePieceFromField(mSkeleton, true);
+            mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 12:
             mSkeleton.resetTeamTurn();
@@ -391,7 +391,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
         case 13:
             mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
                     "You want to annoy us. We get it.\nSkeleton. Endzone.\nStart over.", Color.YELLOW);
-            mPitch.removePieceFromField(mSkeleton, true);
+            mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 14:
             mSkeleton.resetTeamTurn();
@@ -400,7 +400,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
         case 15:
             mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true, "Concentrate.\nE-N-D-Z-O-N-E.",
                     Color.CYAN);
-            mPitch.removePieceFromField(mSkeleton, true);
+            mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 16:
             mSkeleton.resetTeamTurn();
