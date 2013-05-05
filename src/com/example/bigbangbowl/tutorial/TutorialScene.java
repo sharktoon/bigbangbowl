@@ -104,7 +104,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
                 map.attachChild(mFieldSprites[index]);
             }
         }
-        
+
         GameResources res = GameResources.getInstance();
         Sprite endzone0 = res.createSprite(0, 0, GameResources.FRAME_MAP_ENDZONE);
         endzone0.setScale(-1, -1);
@@ -327,48 +327,132 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
     public void onEndturnSelected() {
         mPitch.switchTeams();
     }
-    
+
     PlayerPiece mSkeleton;
 
-    @Override
-    public void onTutorialMessageContinue() {
-        ++mTutorialStep;
+    private void tutorial1Messages() {
         switch (mTutorialStep) {
         case 1:
             mHud.showTutorialMessage(GameResources.FRAME_INVALID, true, "TUTORIAL 1: Scoring!", Color.RED);
+            mPitch.setTutorialRules(ThePitch.TUTORIAL_MOVEMENT);
             break;
         case 2:
             mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
-                    "Welcome to the Pitch!\nThey told me you want to be a coach.", Color.CYAN);
+                    "Welcome to the Pitch!\nThey told us you want to be a coach.", Color.CYAN);
             break;
         case 3:
             mSkeleton = mPitch.createPiece(GameResources.FRAME_SKELETON, 3, 2, 5, 7, 3);
             mSkeleton.resetTeamTurn();
             mPitch.placePiece(mSkeleton, 16, 4);
             mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
-                    "We got you a practice player.\nHe’s really good at following orders.", Color.YELLOW);
+                    "We got you a practice player.\nIt’s really good at following orders.", Color.YELLOW);
             break;
         case 4:
             // spawn skeleton
             mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
-                    "To score, he needs the ball.\nI'll give it him.\nYou order him to the endzone.", Color.CYAN);
+                    "To score, he needs the ball.\nI'll give it to him.\nYou order him to the endzone.", Color.CYAN);
             break;
         case 5:
             mSkeleton.setHasBall(true);
             break;
+        case 6:
+            mHud.showTutorialMessage(
+                    GameResources.FRAME_TUTORIAL_CHAR1,
+                    false,
+                    "You're on the right track!\nThose highlights represent a plan.\nOnce sure, hit the green checkmark.",
+                    Color.YELLOW);
+            break;
+        case 7:
+            // do nothing
+            break;
+        case 8:
+            // skeleton out of move, didn't reach finish
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
+                    "He needs to reach the endzone.\nAnd he may only move so many squares.", Color.CYAN);
+            break;
+        case 9:
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
+                    "We better start over.\nMove it diagonally, if you like.", Color.YELLOW);
+            mPitch.removePieceFromField(mSkeleton, true);
+            break;
+        case 10:
+            mSkeleton.resetTeamTurn();
+            mPitch.placePiece(mSkeleton, 16, 4);
+            break;
+        case 11:
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
+                    "Do look for the endzone.\nAnd order the skeleton there.", Color.CYAN);
+            mPitch.removePieceFromField(mSkeleton, true);
+            break;
+        case 12:
+            mSkeleton.resetTeamTurn();
+            mPitch.placePiece(mSkeleton, 16, 4);
+            break;
+        case 13:
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
+                    "You want to annoy us. We get it.\nSkeleton. Endzone.\nStart over.", Color.YELLOW);
+            mPitch.removePieceFromField(mSkeleton, true);
+            break;
+        case 14:
+            mSkeleton.resetTeamTurn();
+            mPitch.placePiece(mSkeleton, 16, 4);
+            break;
+        case 15:
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true, "Concentrate.\nE-N-D-Z-O-N-E.",
+                    Color.CYAN);
+            mPitch.removePieceFromField(mSkeleton, true);
+            break;
+        case 16:
+            mSkeleton.resetTeamTurn();
+            mPitch.placePiece(mSkeleton, 16, 4);
+            mTutorialStep = 12;
+            break;
+        case 51:
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true, "Well done!\nYour team just scored!",
+                    Color.CYAN);
+            break;
+        case 52:
+            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
+                    "Obviously, when a match is over\nthe team with the higher score wins.", Color.YELLOW);
+            mTutorialStep = 100;
+            break;
         }
+    }
+
+    private void tutorial2Messages() {
+        switch (mTutorialStep) {
+        case 101:
+            mHud.showTutorialMessage(GameResources.FRAME_INVALID, true, "TUTORIAL 2: Going For It!\nComing soon.",
+                    Color.RED);
+            break;
+        }
+
+    }
+
+    @Override
+    public void onTutorialMessageContinue() {
+        ++mTutorialStep;
+        if (mTutorialStep < 100) tutorial1Messages();
+        else if (mTutorialStep < 200) tutorial2Messages();
     }
 
     @Override
     public void onTutorialPlanBegins() {
-        // TODO Auto-generated method stub
-
+        if (mTutorialStep == 5) {
+            onTutorialMessageContinue();
+        }
     }
 
     @Override
     public void onTutorialPlanExecuted() {
-        // TODO Auto-generated method stub
-
+        if (mTutorialStep < 50) {
+            if (mSkeleton.getRemainingMove() <= 0) {
+                if (mSkeleton.getPositionX() == 21) {
+                    mTutorialStep = 50;
+                }
+                onTutorialMessageContinue();
+            }
+        }
     }
 
 }

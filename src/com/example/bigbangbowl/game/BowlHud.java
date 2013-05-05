@@ -281,9 +281,10 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     }
 
     public void showConfirmationSigns(IConfirmationCallback callback) {
+        if (callback == null) return;
         mConfirmationCallback = callback;
-        mSignAccept.setVisible(true);
-        mSignDecline.setVisible(true);
+        mSignAccept.setVisible(mSignContinue == null);
+        mSignDecline.setVisible(mSignContinue == null);
     }
 
     public void hideConfirmationSigns() {
@@ -307,6 +308,11 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
                 if (mTutorialChat == null) {
                     mLastTutorialCharFrame = GameResources.FRAME_INVALID;
+
+                    if (mConfirmationCallback != null) {
+                        mSignAccept.setVisible(true);
+                        mSignDecline.setVisible(true);
+                    }
                 }
             }
         }
@@ -421,13 +427,13 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
             Sprite charsprite = res.createSprite(posX, posY, charFrame);
             layer.attachChild(charsprite);
             charsprite.setScale(scale);
-            
-            if(mLastTutorialCharFrame != charFrame) {
+
+            if (mLastTutorialCharFrame != charFrame) {
                 mLastTutorialCharFrame = charFrame;
                 float offset;
-                if(left) offset = -256;
+                if (left) offset = -256;
                 else offset = 256;
-                        
+
                 charsprite.setPosition(posX + offset, posY);
                 MoveModifier move = new MoveModifier(.3f, posX + offset, posX, posY, posY);
                 charsprite.registerEntityModifier(move);
@@ -455,6 +461,9 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
         this.attachChild(mTutorialChat);
         this.registerTouchArea(mSignContinue);
+
+        mSignAccept.setVisible(false);
+        mSignDecline.setVisible(false);
     }
 
     /** register a new tutorial observer */
@@ -472,6 +481,20 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
                 mTutorialCallback.remove(i);
                 return;
             }
+        }
+    }
+
+    /** trigger a plan begin tutorial observer call - first step planned */
+    public void triggerTutorialPlanBegins() {
+        for (int i = mTutorialCallback.size() - 1; i >= 0; --i) {
+            mTutorialCallback.get(i).onTutorialPlanBegins();
+        }
+    }
+
+    /** trigger a plan finished execution tutorial call */
+    public void triggerTutorialPlanExecuted() {
+        for (int i = mTutorialCallback.size() - 1; i >= 0; --i) {
+            mTutorialCallback.get(i).onTutorialPlanExecuted();
         }
     }
 

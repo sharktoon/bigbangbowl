@@ -80,6 +80,7 @@ public class ThePitch {
     private BowlHud mHud;
 
     public static final int TUTORIAL_MOVEMENT = 1;
+    public static final int TUTORIAL_GFI = 2;
     public static final int TUTORIAL_BLOCKING = 1000;
     public static final int TUTORIAL_FINISHED = 0xfffff;
 
@@ -321,7 +322,9 @@ public class ThePitch {
                 showHint = true;
             }
 
-            if (mSelectedPath.size() >= 2 + mSelectedPiece.getRemainingMove()) {
+            int extraMove = 2;
+            if(mTutorialRules < TUTORIAL_GFI) extraMove = 0;
+            if (mSelectedPath.size() >= extraMove + mSelectedPiece.getRemainingMove()) {
                 fail = true;
                 showHint = false;
             }
@@ -333,6 +336,10 @@ public class ThePitch {
                 Step step = makeNextStep(tileX, tileY, lastPosX, lastPosY);
                 step.sprite = sprite;
                 mSelectedPath.add(step);
+
+                if (mSelectedPath.size() == 1) {
+                    mHud.triggerTutorialPlanBegins();
+                }
             }
 
             if (showHint) {
@@ -617,7 +624,10 @@ public class ThePitch {
             if (mExecutingTimer <= 0) {
                 mExecutingTimer += STEP_DURATION;
                 boolean success = executeNextPlannedStep();
-                if (mSelectedPath.size() <= 0) mExecutingPlan = false;
+                if (mSelectedPath.size() <= 0) {
+                    mHud.triggerTutorialPlanExecuted();
+                    mExecutingPlan = false;
+                }
 
                 if (!success) {
                     if (mLogger != null) {
@@ -738,11 +748,9 @@ public class ThePitch {
             mSelectedPiece.setState(PlayerPiece.STATE_DOWN);
             rollHurtDice(mSelectedPiece);
             cancelPlannedMove();
-            mExecutingPlan = false;
         } else {
             step.sprite.detachSelf();
             mSelectedPath.remove(index);
-            mExecutingPlan = mSelectedPath.size() > 0;
         }
 
         return !failed;
@@ -837,7 +845,6 @@ public class ThePitch {
         mCurrentActor = null;
 
         if (mSelectedPath.size() > 0) mSelectedPath.remove(0);
-        mExecutingPlan = false;
         return !failed;
     }
 
@@ -890,13 +897,13 @@ public class ThePitch {
                 // KNOCKED OUT
                 injuryHurt.append("KNOCKED OUT");
                 piece.setState(PlayerPiece.STATE_KNOCKEDOUT);
-                removePieceFromField(piece);
+                removePieceFromField(piece, true);
                 injuryLogType = IDiceLogReceiver.LOG_SUCCESS;
             } else {
                 // INJURY
                 injuryHurt.append("CASUALTY");
                 piece.setState(PlayerPiece.STATE_INJURED);
-                removePieceFromField(piece);
+                removePieceFromField(piece, true);
                 injuryLogType = IDiceLogReceiver.LOG_SUCCESS;
             }
             injuryHurt.append(" - injury roll: ");
@@ -923,16 +930,19 @@ public class ThePitch {
         }
     }
 
-    private void removePieceFromField(PlayerPiece piece) {
+    public void removePieceFromField(PlayerPiece piece, boolean leaveStain) {
         Entity entity = piece.getEntity();
+        entity.clearEntityModifiers();
         entity.detachSelf();
 
         int index = piece.getPositionX() + piece.getPositionY() * PITCH_WIDTH;
         mPitch[index] = null;
 
-        Sprite blood = GameResources.getInstance().createSprite(piece.getPositionX() * GameScene.TILE_PIXELS,
-                piece.getPositionY() * GameScene.TILE_PIXELS, GameResources.FRAME_BLOOD);
-        mGfxMapBg.attachChild(blood);
+        if (leaveStain) {
+            Sprite blood = GameResources.getInstance().createSprite(piece.getPositionX() * GameScene.TILE_PIXELS,
+                    piece.getPositionY() * GameScene.TILE_PIXELS, GameResources.FRAME_BLOOD);
+            mGfxMapBg.attachChild(blood);
+        }
     }
 
     /** limits the rules to only support certain things */
