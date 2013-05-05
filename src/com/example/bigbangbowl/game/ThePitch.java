@@ -80,7 +80,8 @@ public class ThePitch {
     private BowlHud mHud;
 
     public static final int TUTORIAL_MOVEMENT = 1;
-    public static final int TUTORIAL_GFI = 2;
+    public static final int TUTORIAL_TURNS = 2;
+    public static final int TUTORIAL_GFI = 3;
     public static final int TUTORIAL_BLOCKING = 1000;
     public static final int TUTORIAL_FINISHED = 0xfffff;
 
@@ -244,6 +245,8 @@ public class ThePitch {
         }
 
         mHud.setCurrentTeam(mCurrentTeam);
+
+        mHud.triggerTutorialEndTurn();
     }
 
     /** informs the pitch that the user chose to tap the given tile */
@@ -323,7 +326,7 @@ public class ThePitch {
             }
 
             int extraMove = 2;
-            if(mTutorialRules < TUTORIAL_GFI) extraMove = 0;
+            if (mTutorialRules < TUTORIAL_GFI) extraMove = 0;
             if (mSelectedPath.size() >= extraMove + mSelectedPiece.getRemainingMove()) {
                 fail = true;
                 showHint = false;
@@ -948,5 +951,6 @@ public class ThePitch {
     /** limits the rules to only support certain things */
     public void setTutorialRules(int rules) {
         mTutorialRules = rules;
+        mHud.setEndturnVisibility(mTutorialRules >= TUTORIAL_TURNS);
     }
 }

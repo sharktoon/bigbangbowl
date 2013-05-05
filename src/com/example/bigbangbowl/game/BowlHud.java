@@ -46,6 +46,9 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
 
         /** tutorial - a plan has been fully executed and displayed */
         public void onTutorialPlanExecuted();
+        
+        /** tutorial - player chose to end turn */
+        public void onTutorialEndTurn();
     }
 
     public static interface IEndturnCallback {
@@ -299,6 +302,11 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
         mSignAccept.setVisible(false);
         mSignDecline.setVisible(false);
     }
+    
+    /** allows the endturn button to be hidden */
+    public void setEndturnVisibility(boolean visible) {
+        mButtonEndturn.setVisible(visible);
+    }
 
     @Override
     public boolean onSpriteTouched(TouchSprite sprite, TouchEvent touchEvent, float spriteLocalX, float spriteLocalY) {
@@ -502,6 +510,13 @@ public class BowlHud extends HUD implements ITouchSpriteCallback, IDiceLogReceiv
     public void triggerTutorialPlanExecuted() {
         for (int i = mTutorialCallback.size() - 1; i >= 0; --i) {
             mTutorialCallback.get(i).onTutorialPlanExecuted();
+        }
+    }
+    
+    /** trigger player chose end turn */
+    public void triggerTutorialEndTurn() {
+        for (int i = mTutorialCallback.size() - 1; i >= 0; --i) {
+            mTutorialCallback.get(i).onTutorialEndTurn();
         }
     }
 

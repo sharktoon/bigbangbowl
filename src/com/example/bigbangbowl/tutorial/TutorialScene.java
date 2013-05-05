@@ -328,51 +328,64 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
         mPitch.switchTeams();
     }
 
-    PlayerPiece mSkeleton;
+    private void makeTitle(String text) {
+        mHud.showTutorialMessage(GameResources.FRAME_INVALID, true, text, Color.RED);
+    }
+
+    private void makeHisText(String text) {
+        mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true, text, Color.CYAN);
+    }
+
+    private void makeHerText(String text) {
+        mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false, text, Color.YELLOW);
+    }
+
+    /** ~ the tutorial skeleton! <3 */
+    private PlayerPiece mSkeleton;
+
+    /** create the skeleton if necessary */
+    private void createSkeleton() {
+        if (mSkeleton == null) {
+            mSkeleton = mPitch.createPiece(GameResources.FRAME_SKELETON, 3, 2, 5, 7, 3);
+        } else {
+            mPitch.removePieceFromField(mSkeleton, false);
+        }
+        mSkeleton.resetTeamTurn();
+    }
 
     private void tutorial1Messages() {
         switch (mTutorialStep) {
         case 1:
-            mHud.showTutorialMessage(GameResources.FRAME_INVALID, true, "TUTORIAL 1: Scoring!", Color.RED);
+            makeTitle("TUTORIAL 1: Scoring!");
             mPitch.setTutorialRules(ThePitch.TUTORIAL_MOVEMENT);
             break;
         case 2:
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
-                    "Welcome to the Pitch!\nThey told us you want to be a coach.", Color.CYAN);
+            makeHisText("Welcome to the Pitch!\nThey told us you want to be a coach.");
             break;
         case 3:
-            mSkeleton = mPitch.createPiece(GameResources.FRAME_SKELETON, 3, 2, 5, 7, 3);
-            mSkeleton.resetTeamTurn();
+            createSkeleton();
             mPitch.placePiece(mSkeleton, 16, 4);
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
-                    "We got you a practice player.\nIt’s really good at following orders.", Color.YELLOW);
+            makeHerText("We got you a practice player.\nIt’s really good at following orders.");
             break;
         case 4:
             // spawn skeleton
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
-                    "To score, he needs the ball.\nI'll give it to him.\nYou order him to the endzone.", Color.CYAN);
+            makeHisText("To score, he needs the ball.\nI'll give it to him.\nYou order him to the endzone.");
             break;
         case 5:
             mSkeleton.setHasBall(true);
             break;
         case 6:
-            mHud.showTutorialMessage(
-                    GameResources.FRAME_TUTORIAL_CHAR1,
-                    false,
-                    "You're on the right track!\nThose highlights represent a plan.\nOnce sure, hit the green checkmark.",
-                    Color.YELLOW);
+            makeHerText("You're on the right track!\nThose highlights represent a plan.\nOnce sure, hit the green checkmark.");
             break;
         case 7:
             // do nothing
             break;
         case 8:
             // skeleton out of move, didn't reach finish
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
-                    "He needs to reach the endzone.\nAnd he may only move so many squares.", Color.CYAN);
+            makeHisText("He needs to reach the endzone.\nAnd he may only move so many squares.");
             break;
         case 9:
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
-                    "We better start over.\nMove it diagonally, if you like.", Color.YELLOW);
+            makeHerText("We better start over.\nMove it diagonally, if you like.");
             mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 10:
@@ -380,8 +393,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
             mPitch.placePiece(mSkeleton, 16, 4);
             break;
         case 11:
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true,
-                    "Do look for the endzone.\nAnd order the skeleton there.", Color.CYAN);
+            makeHisText("Do look for the endzone.\nAnd order the skeleton there.");
             mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 12:
@@ -389,8 +401,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
             mPitch.placePiece(mSkeleton, 16, 4);
             break;
         case 13:
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
-                    "You want to annoy us. We get it.\nSkeleton. Endzone.\nStart over.", Color.YELLOW);
+            makeHerText("You want to annoy us. We get it.\nSkeleton. Endzone.\nStart over.");
             mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 14:
@@ -398,8 +409,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
             mPitch.placePiece(mSkeleton, 16, 4);
             break;
         case 15:
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true, "Concentrate.\nE-N-D-Z-O-N-E.",
-                    Color.CYAN);
+            makeHisText("Concentrate.\nE-N-D-Z-O-N-E.");
             mPitch.removePieceFromField(mSkeleton, false);
             break;
         case 16:
@@ -408,12 +418,10 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
             mTutorialStep = 12;
             break;
         case 51:
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR0, true, "Well done!\nYour team just scored!",
-                    Color.CYAN);
+            makeHisText("Well done!\nYour team just scored!");
             break;
         case 52:
-            mHud.showTutorialMessage(GameResources.FRAME_TUTORIAL_CHAR1, false,
-                    "Obviously, when a match is over\nthe team with the higher score wins.", Color.YELLOW);
+            makeHerText("Obviously, when a match is over\nthe team with the higher score wins.");
             mTutorialStep = 100;
             break;
         }
@@ -422,11 +430,57 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
     private void tutorial2Messages() {
         switch (mTutorialStep) {
         case 101:
-            mHud.showTutorialMessage(GameResources.FRAME_INVALID, true, "TUTORIAL 2: Going For It!\nComing soon.",
-                    Color.RED);
+            makeTitle("TUTORIAL 2: Turns!");
+            mPitch.setTutorialRules(ThePitch.TUTORIAL_MOVEMENT);
+            createSkeleton();
+            break;
+        case 102:
+            makeHisText("Each player can move only a limited\nnumber of squares each turn.");
+            break;
+        case 103:
+            makeHerText("Each turn.\nA turn means that your whole team gets to act.");
+            break;
+        case 104:
+            makeHisText("Then the opposing team gets to act.\nAnd then it's back to you.");
+            mPitch.placePiece(mSkeleton, 16, 4);
+            mSkeleton.setHasBall(true);
+            break;
+        case 105:
+            makeHerText("No opposing team here.\nEnd your turn and it's your turn again.");
+            mPitch.setTutorialRules(ThePitch.TUTORIAL_TURNS);
+            break;
+        case 106:
+            makeHisText("The skeleton has MA 5.\nMA = Movement Allowance.\nMeans he can move 5 squares.");
+            break;
+        case 107:
+            makeHerText("But by using multiple turns,\nit can reach the endzone far left.");
+            break;
+        case 108:
+            // skeleton can move about freely
+            break;
+        case 126:
+            makeHisText("I really hope it's not too difficult...\n...for you.\nIt will not get easier.");
+            break;
+        case 127:
+            makeHerText("You know. Left.\nIt's really left.\nTrust us.");
+            break;
+        case 151:
+            makeHisText("Skeletons are damn slow!\nHe did arrive, though.");
+            break;
+        case 152:
+            makeHerText("Don't be afraid to bring the ball\ninto your endzone.\nAs long as your team holds it.");
+            mTutorialStep = 200;
             break;
         }
 
+    }
+
+    private void tutorial3Messages() {
+        switch (mTutorialStep) {
+        case 201:
+            makeTitle("TUTORIAL 3: Going For It!\nComing soon.");
+            break;
+        }
     }
 
     @Override
@@ -434,6 +488,7 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
         ++mTutorialStep;
         if (mTutorialStep < 100) tutorial1Messages();
         else if (mTutorialStep < 200) tutorial2Messages();
+        else if (mTutorialStep < 300) tutorial3Messages();
     }
 
     @Override
@@ -453,6 +508,22 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
                 onTutorialMessageContinue();
             }
         }
+        if (100 < mTutorialStep && mTutorialStep < 150) {
+            if (mSkeleton.getPositionX() == 0) {
+                mTutorialStep = 150;
+                onTutorialMessageContinue();
+            } else if (mTutorialStep < 125) {
+                ++mTutorialStep;
+            } else if (mTutorialStep == 125) {
+                onTutorialMessageContinue();
+            }
+        }
     }
 
+    @Override
+    public void onTutorialEndTurn() {
+        if (100 < mTutorialStep && mTutorialStep < 150) {
+            mSkeleton.resetTeamTurn();
+        }
+    }
 }
