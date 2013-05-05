@@ -104,6 +104,13 @@ public class TutorialScene extends Scene implements IOnSceneTouchListener, IScro
                 map.attachChild(mFieldSprites[index]);
             }
         }
+        
+        GameResources res = GameResources.getInstance();
+        Sprite endzone0 = res.createSprite(0, 0, GameResources.FRAME_MAP_ENDZONE);
+        endzone0.setScale(-1, -1);
+        Sprite endzone1 = res.createSprite(21 * TILE_PIXELS, 0, GameResources.FRAME_MAP_ENDZONE);
+        map.attachChild(endzone0);
+        map.attachChild(endzone1);
 
         float targetWidth = MAP_WIDTH * TILE_PIXELS;
         float targetHeight = MAP_HEIGHT * TILE_PIXELS;

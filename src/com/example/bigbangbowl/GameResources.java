@@ -88,6 +88,7 @@ public class GameResources {
     public static final int FRAME_WARNING_TURNOVER = 16100;
 
     public static final int FRAME_MAP_GRID = 16200;
+    public static final int FRAME_MAP_ENDZONE = 16201;
 
     public static final int FRAME_TUTORIAL_TEXTBOX = 20000;
     public static final int FRAME_TUTORIAL_CHAR0 = 20010;
@@ -101,7 +102,10 @@ public class GameResources {
         mTextureRegions = new SparseArray<TextureRegion>();
         mVbo = activity.getVertexBufferObjectManager();
 
-        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 2048, 1024);
+        mTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 2048, 2048);
+
+        mTextureRegions.put(FRAME_MAP_ENDZONE, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
+                activity, "gfx/endzone.png", 2048 - 128, 0));
 
         // pieces
         mTextureRegions.put(FRAME_CHAOS_BEASTMAN, BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTextureAtlas,
